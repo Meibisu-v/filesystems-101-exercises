@@ -41,7 +41,7 @@ void ps(void)
         }    
 
         char **environ_lines = NULL;
-        int environ_size = 0;
+        size_t environ_size = 0;
         ssize_t nread;
         size_t len = 0;
         char *line = NULL;
@@ -73,7 +73,7 @@ void ps(void)
             continue;
         }    
         char **lines = NULL;
-        int cmdline_size = 0;
+        size_t cmdline_size = 0;
         
         while (1) {    
             nread =  getdelim(&line, &len, '\0', fd);
