@@ -41,7 +41,7 @@ void ps(void)
         }    
 
 		char **environ_lines = NULL;
-		int num_righe = 0;
+		int environ_size = 0;
 		ssize_t nread;
 		size_t len = 0;
 		char *line = NULL;
@@ -53,11 +53,11 @@ void ps(void)
 				break;
 			}
 			printf("OUT %s, len = %ld\n", line, len); 
-			num_righe++;
-			environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(num_righe+1));
-			environ_lines[num_righe-1] = strdup(line);
+			environ_size++;
+			environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(environ_size+1));
+			environ_lines[environ_size-1] = strdup(line);
 		}
-		environ_lines[num_righe] = NULL;
+		environ_lines[environ_size] = NULL;
 		fclose(fd);
 ////
 		snprintf(path_cmdline, sizeof(path_cmdline), "/proc/%s/cmdline", process->d_name);		
@@ -67,7 +67,7 @@ void ps(void)
 			continue;
         }    
 		char **lines = NULL;
-		num_righe = 0;
+		int cmdline_size = 0;
 		
         while (1) {     
 			line = NULL;
@@ -76,12 +76,12 @@ void ps(void)
 			if (nread < 0) {
 				break;
 			}
-			num_righe++;
-			lines = (char**)realloc(lines, sizeof(char*)*(num_righe + 1));
-			lines[num_righe-1] = strdup(line);
+			cmdline_size++;
+			lines = (char**)realloc(lines, sizeof(char*)*(cmdline_size + 1));
+			lines[cmdline_size-1] = strdup(line);
 			line = NULL;
 		}
-		lines[num_righe] = NULL;
+		lines[cmdline_size] = NULL;
 		fclose(fd);
 
 		snprintf(path_exe, sizeof(path_exe), "/proc/%s/exe", process->d_name);		
@@ -93,6 +93,14 @@ void ps(void)
         }
         exe_addr[nbytes] = '\0';
         report_process(pid, exe_addr, lines, environ_lines);
+		for (char **x = lines; *x != NULL; ++x)
+		{
+			free(*x);
+		}		
+		for (char **x = environ_lines; *x != NULL; ++x)
+		{
+			free(*x);
+		}
 		free(lines);
 		free(line);
 		free(environ_lines);
