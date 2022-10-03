@@ -46,8 +46,6 @@ void ps(void)
 		size_t len = 0;
 		char *line = NULL;
 		while(1) { 
-			line = NULL;
-			len = 0;
 			nread = getdelim(&line, &len, '\0', fd);
 			if (nread < 0) {
 				break;
@@ -69,9 +67,7 @@ void ps(void)
 		char **lines = NULL;
 		int cmdline_size = 0;
 		
-        while (1) {     
-			line = NULL;
-			len = 0;
+        while (1) {    
 			nread =  getdelim(&line, &len, '\0', fd);
 			if (nread < 0) {
 				break;
@@ -79,7 +75,6 @@ void ps(void)
 			cmdline_size++;
 			lines = (char**)realloc(lines, sizeof(char*)*(cmdline_size + 1));
 			lines[cmdline_size-1] = strdup(line);
-			line = NULL;
 		}
 		lines[cmdline_size] = NULL;
 		fclose(fd);
@@ -88,8 +83,7 @@ void ps(void)
         char exe_addr[BUFFER_SIZE];
         ssize_t nbytes = readlink(path_exe, exe_addr, BUFFER_SIZE);       
         if (nbytes == -1) {
-               perror("readlink");
-               exit(EXIT_FAILURE);
+			report_error(path_exe, errno);
         }
         exe_addr[nbytes] = '\0';
         report_process(pid, exe_addr, lines, environ_lines);
@@ -104,6 +98,9 @@ void ps(void)
 		free(lines);
 		free(line);
 		free(environ_lines);
+	}
+	if (closedir(proc) == -1) {
+		report_error("/proc/", errno);
 	}
 }
 
