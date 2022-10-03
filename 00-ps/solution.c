@@ -56,15 +56,9 @@ void ps(void)
             if (environ_size >= ar_size) 
             {
                 ar_size = ar_size * 2;
-                environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(ar_size + 1));
+                environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(ar_size));
             }
-            if (environ_lines != NULL) 
-            {
-                environ_lines[environ_size-1] = strdup(line);
-            } else 
-            {
-                report_error(path_environ, errno);
-            }
+            environ_lines[environ_size-1] = strdup(line);
         }
         if (environ_lines != NULL) 
         {
