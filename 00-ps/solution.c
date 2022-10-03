@@ -60,7 +60,10 @@ void ps(void)
                 report_error(path_environ, errno);
             }
         }
-        environ_lines[environ_size] = NULL;
+        if (environ_lines != NULL) 
+        {
+            environ_lines[environ_size] = NULL;
+        }
         fclose(fd);
 ////
         snprintf(path_cmdline, sizeof(path_cmdline), "/proc/%s/cmdline", process->d_name);		
