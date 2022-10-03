@@ -42,16 +42,22 @@ void ps(void)
 
         char **environ_lines = NULL;
         size_t environ_size = 0;
+        size_t ar_size = 1;
         ssize_t nread;
         size_t len = 0;
         char *line = NULL;
+        environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(ar_size));
         while(1) { 
             nread = getdelim(&line, &len, '\0', fd);
             if (nread < 0) {
                 break;
             }
             environ_size++;
-            environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(environ_size+1));
+            if (environ_size >= ar_size) 
+            {
+                ar_size = ar_size * 2;
+                environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(ar_size + 1));
+            }
             if (environ_lines != NULL) 
             {
                 environ_lines[environ_size-1] = strdup(line);
@@ -73,8 +79,7 @@ void ps(void)
             continue;
         }    
         char **lines = NULL;
-        size_t cmdline_size = 0;
-        
+        size_t cmdline_size = 0;        
         while (1) {    
             nread =  getdelim(&line, &len, '\0', fd);
             if (nread < 0) {
@@ -100,9 +105,9 @@ void ps(void)
         {
             free(*x);
         }		
-        for (char **x = environ_lines; *x != NULL; ++x)
+        for (size_t i = 0; i < environ_size; ++i)
         {
-            free(*x);
+            free(environ_lines[i]);
         }
         free(lines);
         free(line);
