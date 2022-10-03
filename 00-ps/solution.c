@@ -50,7 +50,6 @@ void ps(void)
 			if (nread < 0) {
 				break;
 			}
-			printf("OUT %s, len = %ld\n", line, len); 
 			environ_size++;
 			environ_lines = (char**)realloc(environ_lines, sizeof(char*)*(environ_size+1));
 			environ_lines[environ_size-1] = strdup(line);
@@ -84,6 +83,7 @@ void ps(void)
         ssize_t nbytes = readlink(path_exe, exe_addr, BUFFER_SIZE);       
         if (nbytes == -1) {
 			report_error(path_exe, errno);
+			continue;
         }
         exe_addr[nbytes] = '\0';
         report_process(pid, exe_addr, lines, environ_lines);
