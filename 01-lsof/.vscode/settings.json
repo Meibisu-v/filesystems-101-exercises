@@ -1,0 +1,9 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/elizaveta/filesystems-101-exercises/01-lsof",
+            "binaryPath": "/home/elizaveta/filesystems-101-exercises/01-lsof/a.out",
+            "binaryArgs": []
+        }
+    ]
+}
