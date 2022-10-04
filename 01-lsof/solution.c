@@ -38,9 +38,11 @@ void lsof(void)
         DIR *proc_fd = opendir(path_fd);
         if (proc_fd == NULL) 
         {
+            report_error(path_fd, errno);
             continue;
         }
         errno = 0;
+        char fd_path[BUFFER_SIZE];
         while (1)
         {
             files = readdir(proc_fd);
@@ -54,7 +56,6 @@ void lsof(void)
                 errno = 0;
             }
             snprintf(symlink, sizeof(symlink), "/proc/%s/fd/%s", process->d_name, files->d_name);
-            char fd_path[BUFFER_SIZE];
             ssize_t nbytes = readlink(symlink, fd_path, BUFFER_SIZE);
             if (nbytes == -1) 
             {
@@ -62,7 +63,7 @@ void lsof(void)
             }     
             report_file(fd_path);
         }
-        
+
         if (closedir(proc_fd) == -1) {
             report_error("/proc/", errno);
         }  
