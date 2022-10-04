@@ -1,6 +1,6 @@
 #include <solution.h>
-// opendir
 #include <sys/types.h>
+#include <stdio.h>
 #include <errno.h>
 #include <dirent.h>
 #include <ctype.h>
@@ -8,9 +8,6 @@
 #include <unistd.h>
 #include <string.h>
 #define BUFFER_SIZE 8192
-
-// -----------
-#include <stdio.h>
 
 int is_PID(char*);
 
@@ -27,15 +24,18 @@ void ps(void)
     char path_environ[256 + sizeof("/proc") + sizeof("/environ") + 2]; // /proc + /environ+ //
     char path_exe[256 + sizeof("/proc") + sizeof("/exe") + 2]; // /proc + /exe + //
     char path_cmdline[256 + sizeof("/proc") + sizeof("/cmdline") + 2]; // /proc + /cmdline + //
-    while ((process = readdir(proc))) {
-        if (is_PID(process->d_name) == 0) {
+    while ((process = readdir(proc))) 
+    {
+        if (is_PID(process->d_name) == 0) 
+        {
             continue;
         }	
         pid_t pid;
         sscanf(process->d_name, "%d", &pid);
         snprintf(path_environ, sizeof(path_environ), "/proc/%s/environ", process->d_name);
         fd = fopen(path_environ, "r"); 
-        if (!fd) {
+        if (!fd) 
+        {
             report_error(path_environ, errno);
             continue;
         }    
@@ -60,30 +60,33 @@ void ps(void)
             }
             environ_lines[environ_size-1] = strdup(line);
         }
-        if (environ_lines != NULL) 
-        {
-            environ_lines[environ_size] = NULL;
-        }
+        environ_lines[environ_size] = NULL;
         fclose(fd);
-////
+
         snprintf(path_cmdline, sizeof(path_cmdline), "/proc/%s/cmdline", process->d_name);		
         fd = fopen(path_cmdline, "r"); 
         if (!fd) {
             report_error(path_cmdline, errno);
             continue;
-        }    
-        char **lines = NULL;
-        size_t cmdline_size = 0;        
+        }      
+        ar_size = 1;   
+        size_t cmdline_size = 0;  
+        char **cmd_lines = NULL;
+        cmd_lines = (char**)realloc(cmd_lines, sizeof(char*)*(ar_size));
         while (1) {    
             nread =  getdelim(&line, &len, '\0', fd);
             if (nread < 0) {
                 break;
             }
             cmdline_size++;
-            lines = (char**)realloc(lines, sizeof(char*)*(cmdline_size + 1));
-            lines[cmdline_size-1] = strdup(line);
+            if (cmdline_size >= ar_size) 
+            {
+                ar_size = ar_size * 2;
+                cmd_lines = (char**)realloc(cmd_lines, sizeof(char*)*(ar_size));
+            }
+            cmd_lines[cmdline_size - 1] = strdup(line);
         }
-        lines[cmdline_size] = NULL;
+        cmd_lines[cmdline_size] = NULL;
         fclose(fd);
 
         snprintf(path_exe, sizeof(path_exe), "/proc/%s/exe", process->d_name);		
@@ -94,8 +97,8 @@ void ps(void)
             continue;
         }
         exe_addr[nbytes] = '\0';
-        report_process(pid, exe_addr, lines, environ_lines);
-        for (char **x = lines; *x != NULL; ++x)
+        report_process(pid, exe_addr, cmd_lines, environ_lines);
+        for (char **x = cmd_lines; *x != NULL; ++x)
         {
             free(*x);
         }		
@@ -103,7 +106,7 @@ void ps(void)
         {
             free(environ_lines[i]);
         }
-        free(lines);
+        free(cmd_lines);
         free(line);
         free(environ_lines);
     }
