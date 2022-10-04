@@ -61,6 +61,7 @@ void lsof(void)
             {
                 continue;
             }     
+            fd_path[nbytes] = '\0';
             report_file(fd_path);
         }
 
