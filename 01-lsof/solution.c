@@ -62,6 +62,7 @@ void lsof(void)
             }     
             report_file(fd_path);
         }
+        
         if (closedir(proc_fd) == -1) {
             report_error("/proc/", errno);
         }  
