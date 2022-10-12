@@ -53,8 +53,8 @@ fs_open(const char *path, struct fuse_file_info *ffi)
     if (strcmp(path, "/hello") != 0)
         return -ENOENT;
 
-    // if ((ffi->flags & O_ACCMODE) != O_RDONLY)
-    // 	return -EACCES;
+    if ((ffi->flags & O_ACCMODE) != O_RDONLY)
+    	return -EACCES;
     (void) ffi;
 
     return 0;
