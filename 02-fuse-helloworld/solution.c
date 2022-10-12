@@ -34,21 +34,20 @@ fs_read(const char *path, char *buf, size_t size, off_t off,
 	if(strcmp(path, "/hello") != 0)
 		return -ENOENT;
 	(void) ffi;
-	size_t len;
-	// printf("pid %d\n", getpid());
-	sprintf(hello_str, "hello, %d\n%c", getpid(), '\0');
-	// printf("%s", hello_str);
+	size_t len;	
+	struct fuse_context *fuse_pid = fuse_get_context();
+	sprintf(hello_str, "hello, %d\n", fuse_pid->pid);
 
 	len = strlen(hello_str);
 
 	if ((size_t)off < len) {
 		if ((size_t) off + size > len)
 			size = len - (size_t) off;
+		memcpy(buf, hello_str, size);
 	} else
 		size = 0;
 	// char *selected_text = hello_str;
 	// printf("size %lu, %s", size, selected_text);
-	memcpy(buf, hello_str, size);
 
 	return size;
 }
