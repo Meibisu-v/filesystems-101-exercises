@@ -36,7 +36,7 @@ fs_read(const char *path, char *buf, size_t size, off_t off,
 	(void) ffi;
 	size_t len;
 	// printf("pid %d\n", getpid());
-	sprintf(hello_str, "hello, %d\n", getpid());
+	sprintf(hello_str, "hello, %d\n%c", getpid(), '\0');
 	// printf("%s", hello_str);
 
 	len = strlen(hello_str);
