@@ -46,9 +46,9 @@ fs_read(const char *path, char *buf, size_t size, off_t off,
 			size = len - (size_t) off;
 	} else
 		size = 0;
-	char *selected_text = hello_str;
+	// char *selected_text = hello_str;
 	// printf("size %lu, %s", size, selected_text);
-	memcpy(buf, selected_text + off, size);
+	memcpy(buf, hello_str, size);
 
 	return size;
 }
@@ -82,7 +82,7 @@ fs_getattr(const char *path, struct stat *st, struct fuse_file_info *ffi)
 		st->st_mode = S_IFDIR | 0775;
 		st->st_nlink = 2;
 	} else if (strcmp(path, "/hello") == 0){
-		st->st_mode = S_IFREG | 0444;
+		st->st_mode = S_IFREG | 0400;
 		st->st_nlink = 1;
 		st->st_size = strlen(hello_str);
 	} else {
