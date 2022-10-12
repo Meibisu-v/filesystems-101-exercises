@@ -8,7 +8,6 @@ static int
 fs_readdir(const char *path, void *data, fuse_fill_dir_t filler,
            off_t off, struct fuse_file_info *ffi, enum fuse_readdir_flags fl)
 {
-    // printf( "--> Getting The List of Files of %s\n", path );
     (void) ffi;
     (void) off;
     (void) fl;
@@ -26,7 +25,6 @@ static int
 fs_read(const char *path, char *buf, size_t size, off_t off,
         struct fuse_file_info *ffi)
 {	
-    // printf( "--> Trying to read %s, %lu, %lu\n", path, off, size );
     if(strcmp(path, "/hello") != 0)
         return -EROFS;
     (void) ffi;
@@ -49,7 +47,6 @@ fs_read(const char *path, char *buf, size_t size, off_t off,
 static int
 fs_open(const char *path, struct fuse_file_info *ffi)
 {
-    // printf("open called, path %s\n", path);
     if (strcmp(path, "/hello") != 0)
         return -EROFS;
 
@@ -63,9 +60,6 @@ fs_open(const char *path, struct fuse_file_info *ffi)
 static int
 fs_getattr(const char *path, struct stat *st, struct fuse_file_info *ffi)
 {
-    
-    // printf( "[getattr] Called\n" );	
-    // printf( "\tAttributes of %s requested\n", path );
     (void) ffi;
     st->st_uid = getuid();
     st->st_gid = getgid();
