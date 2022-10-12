@@ -54,7 +54,7 @@ fs_open(const char *path, struct fuse_file_info *ffi)
         return -ENOENT;
 
     if ((ffi->flags & O_ACCMODE) != O_RDONLY)
-    	return -EACCES;
+    	return EROFS;
     (void) ffi;
 
     return 0;
