@@ -74,12 +74,26 @@ fs_getattr(const char *path, struct stat *st, struct fuse_file_info *ffi)
         st->st_nlink = 1;
         st->st_size = strlen("hello \n") + 8;
     } else {
-        // printf("enoent getattr \n");
-        // fflush(stdout);
         return -ENOENT;
     }
 
     return 0;
+}
+
+static int fs_write(const char* path, const char* data, size_t size, off_t off, struct fuse_file_info *ffi) {
+    (void) data;
+    (void) size;
+    (void) off;
+    (void) ffi;
+    (void) path;
+    return -EROFS;
+}
+
+static int fs_create(const char* path, mode_t mode, struct fuse_file_info* ffi) {
+    (void) path;
+    (void) mode;
+    (void) ffi;
+    return -EROFS;
 }
 
 static const struct fuse_operations hellofs_ops = {
@@ -87,6 +101,8 @@ static const struct fuse_operations hellofs_ops = {
     .read = fs_read,
     .open = fs_open,
     .getattr = fs_getattr,
+    .write = fs_write,
+    .create = fs_create,
 };
 
 int helloworld(const char *mntp)
