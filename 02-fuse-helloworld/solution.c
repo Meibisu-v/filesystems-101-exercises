@@ -12,7 +12,7 @@ fs_readdir(const char *path, void *data, fuse_fill_dir_t filler,
     (void) off;
     (void) fl;
     if (strcmp(path, "/") != 0)
-        return -EROFS;
+        return -ENOENT;
 
     filler(data, ".", NULL, 0, 0);
     filler(data, "..", NULL, 0, 0 );
@@ -26,7 +26,7 @@ fs_read(const char *path, char *buf, size_t size, off_t off,
         struct fuse_file_info *ffi)
 {	
     if(strcmp(path, "/hello") != 0)
-        return -EROFS;
+        return -ENOENT;
     (void) ffi;
     ssize_t len;	
     struct fuse_context *fuse_pid = fuse_get_context();
@@ -48,7 +48,7 @@ static int
 fs_open(const char *path, struct fuse_file_info *ffi)
 {
     if (strcmp(path, "/hello") != 0)
-        return -EROFS;
+        return -ENOENT;
 
     if ((ffi->flags & O_ACCMODE) != O_RDONLY)
     	return -EROFS;
