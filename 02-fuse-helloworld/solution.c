@@ -47,13 +47,15 @@ fs_read(const char *path, char *buf, size_t size, off_t off,
 static int
 fs_open(const char *path, struct fuse_file_info *ffi)
 {
-    if (strcmp(path, "/hello") != 0)
+    if (strcmp(path, "/hello") != 0){
+        printf("enoent fs_open");
         return -ENOENT;
+    }
 
-    if ((ffi->flags & O_ACCMODE) != O_RDONLY)
+    if ((ffi->flags & O_ACCMODE) != O_RDONLY) {
+        printf("erofs fsopen ");
     	return -EROFS;
-    (void) ffi;
-
+    }
     return 0;
 }
 
@@ -73,7 +75,7 @@ fs_getattr(const char *path, struct stat *st, struct fuse_file_info *ffi)
         st->st_nlink = 1;
         st->st_size = strlen("hello \n") + 8;
     } else {
-        return -EROFS;
+        return -ENOENT;
     }
 
     return 0;
