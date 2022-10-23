@@ -22,14 +22,16 @@ static int read_write_queue(struct io_uring *ring, off_t length, off_t offset, i
     struct io_uring_sqe *sqe;
     sqe = io_uring_get_sqe(ring);
     if (!sqe) {
-        ret = errno;
+        return errno;
     }
-    struct io_data* iovecs = malloc(length + sizeof(*iovecs));
-    if (!iovecs) {
-        ret = errno;
-    }            
+    struct io_data* iovecs;
+    void *ptr = malloc(length + sizeof(*iovecs));
+    if (!ptr) {
+        return errno;
+    }
+    iovecs = ptr + length;            
     iovecs->iovec.iov_len = length;
-    iovecs->iovec.iov_base = iovecs;
+    iovecs->iovec.iov_base = ptr;
     iovecs->offset = offset;
     iovecs->index = 0;
     io_uring_prep_readv(sqe, in, &iovecs->iovec, 1, offset);
@@ -38,7 +40,7 @@ static int read_write_queue(struct io_uring *ring, off_t length, off_t offset, i
 
     sqe = io_uring_get_sqe(ring);
     if (!sqe) {
-        printf("%s", strerror(errno));
+        // printf("%s", strerror(errno));
         ret = errno;
     }
     io_uring_prep_writev(sqe, out, &iovecs->iovec, 1, offset);
@@ -99,7 +101,8 @@ int copy(int in, int out)
         }
 
         struct io_uring_cqe *cqe;
-        while (current_entries >= ENTRIES) {
+        size_t to_write = remain_to_read ? ENTRIES : 1;
+        while (current_entries >= to_write) {
             ret = io_uring_wait_cqe(&ring, &cqe);
             if (ret < 0) {
                 return -ret;
@@ -111,15 +114,18 @@ int copy(int in, int out)
                 if (cqe->res == -ECANCELED) {
                     if (read_write_queue(&ring, READ_SIZE, iovecs->offset, in, out) < 0) {
                         // printf("%s", strerror(errno));
-                        return -errno;
+                        // return -errno;
                     }
                     current_entries += 2;
                 } else {
                     return -errno;
                 }
             }
+            // printf("index = %d\n", iovecs->index);
             if (iovecs->index == 2) {
-                void *ptr = (void *) iovecs - iovecs->iovec.iov_len;
+                void *ptr = (void*) iovecs - iovecs->iovec.iov_len;
+                // printf("free\n");
+                // printf("offset %ld\n", iovecs->offset);
                 free(ptr);
             }
             io_uring_cqe_seen(&ring, cqe);
