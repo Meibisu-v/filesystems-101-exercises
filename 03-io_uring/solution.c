@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define ENTRIES 4
-#define READ_SIZE (256)
+#define READ_SIZE (256*1024)
 
 struct io_data {
     int index;
