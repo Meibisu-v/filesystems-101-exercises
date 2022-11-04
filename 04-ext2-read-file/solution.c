@@ -33,7 +33,7 @@ int dump_file(int img, int inode_nr, int out) {
     struct ext2_group_desc g_desc;
     uint offset = (inode_nr - 1) / s_block.s_inodes_per_group * sizeof(g_desc);
     offset = (BLOCK_SIZE > BLOCK_INIT) ? (offset + BLOCK_SIZE) : (offset + BLOCK_SIZE*2);
-    ret = lseek(img, (s_block.s_first_data_block + 1) * BLOCK_SIZE, SEEK_SET);
+    ret = lseek(img, offset, SEEK_SET);
     if (ret < 0) {
         return -errno;
     }
