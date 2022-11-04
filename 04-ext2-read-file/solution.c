@@ -14,9 +14,6 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
                             long *offset);
 
 int dump_file(int img, int inode_nr, int out) {
-    (void) img;
-    (void) inode_nr;
-    (void) out;
     // read superblock
     struct ext2_super_block s_block;
     int ret = lseek(img, BLOCK_INIT, SEEK_SET);
@@ -100,8 +97,9 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
         return -errno;
     }
     for (uint i = 0; i < block_size / 4; ++i) {
-        ret = handle_direct_blocks(img, out, ind_block_buffer[i], block_size, 
-            offset);
+        if ((int)ind_block_buffer[i] == 0) break;
+        ret = handle_direct_blocks(img, out, ind_block_buffer[i], 
+                                    block_size, offset);
         if (ret < 0) {
             return ret;
         }
