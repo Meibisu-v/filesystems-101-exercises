@@ -105,7 +105,7 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
         if (ret < 0) {
             return ret;
         }
-        if (*offset < 0) break;
+        if (*offset <= 0) break;
     }
     return 0;
 }
@@ -122,7 +122,7 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
     for (uint i = 0; i < block_size / 4; ++ i) {
         handle_ind_block(img, out, double_ind_block_buffer[i], 
                             block_size, offset);
-        if (*offset < 0) {
+        if (*offset <= 0) {
             break;
         }
     }
