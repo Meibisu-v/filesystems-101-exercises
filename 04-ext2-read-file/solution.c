@@ -14,9 +14,6 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
                             long *offset);
 
 int dump_file(int img, int inode_nr, int out) {
-    (void) img;
-    (void) inode_nr;
-    (void) out;
     // read superblock
     struct ext2_super_block s_block;
     int ret = lseek(img, BLOCK_INIT, SEEK_SET);
@@ -28,11 +25,11 @@ int dump_file(int img, int inode_nr, int out) {
         return -errno;
     }	
     // 
-    uint BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
+    int BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
     // таблица дескрипторов
     struct ext2_group_desc g_desc;
-    uint offset = (inode_nr - 1) / s_block.s_inodes_per_group * sizeof(g_desc);
-    offset = (BLOCK_SIZE > BLOCK_INIT) ? (offset + BLOCK_SIZE) : (offset + BLOCK_SIZE*2);
+    uint offset = BLOCK_SIZE * (s_block.s_first_data_block + 1) 
+            + (inode_nr - 1) / s_block.s_inodes_per_group * sizeof(g_desc);
     ret = lseek(img, offset, SEEK_SET);
     if (ret < 0) {
         return -errno;
@@ -55,22 +52,27 @@ int dump_file(int img, int inode_nr, int out) {
     }
     //copy
     long size = inode.i_size;
-    for (size_t i = 0; i < EXT2_NDIR_BLOCKS; ++i) {
-        int ret = handle_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, 
-                                    //    buffer, 
-                                       &size);
-        if (ret < 0) return ret;
-    }
-    ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
-                            &size);
-    if (ret < 0) {
-        return ret;
-    }
-    ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 2], BLOCK_SIZE,
-                            &size);
-    if (ret < 0) {
-        return ret;
-    }    
+    for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
+        if (i < EXT2_NDIR_BLOCKS) {
+            int ret = handle_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, 
+                                        &size);
+            if (ret < 0) return ret;
+        }
+        if (i == EXT2_IND_BLOCK) {
+            ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
+                                    &size);
+            if (ret < 0) {
+                return ret;
+            }
+        }
+        if (i == EXT2_DIND_BLOCK) {
+            ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 2], BLOCK_SIZE,
+                                    &size);
+            if (ret < 0) {
+                return ret;
+            }  
+        }
+    }  
     return 0;
 }
 
