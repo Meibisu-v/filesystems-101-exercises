@@ -93,17 +93,18 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
         return -errno;
     }
     char ind_block_buffer[block_size];
+    int *ind_block_v = (int*)ind_block_buffer;
     if (read(img, &ind_block_buffer, block_size) < 0) {
         return -errno;
     }
     for (uint i = 0; i < block_size / 4; ++i) {
-        if ((int)ind_block_buffer[i] == 0) break;
+        if (*offset <= 0) break;
+        if (ind_block_v[i] == 0) {break;}
         ret = handle_direct_blocks(img, out, ind_block_buffer[i], 
                                     block_size, offset);
         if (ret < 0) {
             return ret;
         }
-        if (*offset <= 0) break;
     }
     return 0;
 }
