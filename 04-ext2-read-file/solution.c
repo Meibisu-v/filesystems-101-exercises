@@ -59,14 +59,14 @@ int dump_file(int img, int inode_nr, int out) {
             if (ret < 0) return ret;
         }
         if (i == EXT2_IND_BLOCK) {
-            ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
+            ret = handle_ind_block(img, out, inode.i_block[i], BLOCK_SIZE,
                                     &size);
             if (ret < 0) {
                 return ret;
             }
         }
         if (i == EXT2_DIND_BLOCK) {
-            ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 2], BLOCK_SIZE,
+            ret = handle_double_ind_block(img, out, inode.i_block[i], BLOCK_SIZE,
                                     &size);
             if (ret < 0) {
                 return ret;
