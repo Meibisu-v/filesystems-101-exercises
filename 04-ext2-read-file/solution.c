@@ -68,11 +68,7 @@ int dump_file(int img, int inode_nr, int out) {
 int handle_direct_blocks(int img, int out, uint i_block, uint block_size,
                          long *offset) {
     char buffer[block_size];
-    int ret = lseek(img, i_block * block_size, SEEK_SET);
-    if (ret < 0) {
-        return -errno;
-    }
-    ret = read(img, buffer, block_size) < 0;
+    int ret = pread(img, buffer, block_size, i_block * block_size);
     if (ret < 0) {
         return -errno;
     }
@@ -85,12 +81,9 @@ int handle_direct_blocks(int img, int out, uint i_block, uint block_size,
 }
 int handle_ind_block(int img, int out, uint i_block, uint block_size, 
                       long *offset) {
-    int ret = lseek(img, i_block * block_size, SEEK_SET);
-    if (ret < 0) {
-        return -errno;
-    }
     char *buffer_indir = malloc(sizeof(char) * block_size);
-    if (read(img, buffer_indir, block_size) < 0) {
+    int ret = pread(img, buffer_indir, block_size, i_block * block_size);
+    if (ret < 0) {
         return -errno;
     }
     uint *buffer_int = (uint*) buffer_indir;
@@ -106,12 +99,9 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
 }
 int handle_double_ind_block(int img, int out, uint i_block, uint block_size, 
                             long *offset) {
-    int ret = lseek(img, i_block * block_size, SEEK_SET);
-    if (ret < 0) {
-        return -errno;
-    }
     char* double_ind_block_buffer = malloc(sizeof(char) * block_size);
-    if (read(img, double_ind_block_buffer, block_size) < 0) {
+    int ret = pread(img, double_ind_block_buffer, block_size, i_block * block_size);
+    if (ret < 0) {
         return -errno;
     }
     uint *buffer_int = (uint*) double_ind_block_buffer;
