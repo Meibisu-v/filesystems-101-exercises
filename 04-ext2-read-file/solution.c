@@ -16,25 +16,17 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
 int dump_file(int img, int inode_nr, int out) {
     // read superblock
     struct ext2_super_block s_block;
-    int ret = lseek(img, BLOCK_INIT, SEEK_SET);
-    if (ret < 0) {
-        return -errno;
-    }
-    ret = read(img, &s_block, sizeof(s_block));
+    int ret =  pread(img, &s_block, sizeof(s_block), BLOCK_INIT);
     if (ret < 0) {
         return -errno;
     }	
-    // 
+    
     int BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
     // таблица дескрипторов
     struct ext2_group_desc g_desc;
     uint offset = BLOCK_SIZE * (s_block.s_first_data_block + 1) 
             + (inode_nr - 1) / s_block.s_inodes_per_group * sizeof(g_desc);
-    ret = lseek(img, offset, SEEK_SET);
-    if (ret < 0) {
-        return -errno;
-    }
-    ret = read(img, &g_desc, sizeof(g_desc));
+    ret = pread(img, &g_desc, sizeof(g_desc), offset);
     if (ret < 0) {
         return -errno;
     }
@@ -43,11 +35,7 @@ int dump_file(int img, int inode_nr, int out) {
     uint index = (inode_nr - 1) % s_block.s_inodes_per_group;
     uint pos = g_desc.bg_inode_table * BLOCK_SIZE + 
             (index * s_block.s_inode_size);
-    ret = lseek(img, pos, SEEK_SET);
-    if (ret < 0) {
-        return -errno;
-    }
-    if (read(img, &inode, sizeof(inode)) < 0) {
+    if (pread(img, &inode, sizeof(inode), pos) < 0) {
         return -errno;
     }
     //copy
