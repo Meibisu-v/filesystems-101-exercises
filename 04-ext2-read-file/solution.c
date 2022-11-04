@@ -99,18 +99,19 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
     if (ret < 0) {
         return -errno;
     }
-    char ind_block_buffer[block_size];
-    if (read(img, ind_block_buffer, block_size) < 0) {
+    char *buffer_indir = malloc(sizeof(char) * block_size);
+    if (read(img, buffer_indir, block_size) < 0) {
         return -errno;
     }
+    uint *buffer_int = (uint*) buffer_indir;
     for (uint i = 0; i < block_size / 4; ++i) {
-        ret = handle_direct_blocks(img, out, (uint)ind_block_buffer[i], block_size, 
-            offset);
+        ret = handle_direct_blocks(img, out, buffer_int[i], block_size, offset);
         if (ret < 0) {
             return ret;
         }
         if (*offset < 0) break;
     }
+    free(buffer_indir);
     return 0;
 }
 int handle_double_ind_block(int img, int out, uint i_block, uint block_size, 
@@ -119,16 +120,18 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
     if (ret < 0) {
         return -errno;
     }
-    char double_ind_block_buffer[block_size];
+    char* double_ind_block_buffer = malloc(sizeof(char) * block_size);
     if (read(img, double_ind_block_buffer, block_size) < 0) {
         return -errno;
     }
+    uint *buffer_int = (uint*) double_ind_block_buffer;
     for (uint i = 0; i < block_size / 4; ++ i) {
-        handle_ind_block(img, out, (uint)double_ind_block_buffer[i], 
-                            block_size, offset);
+        ret = handle_ind_block(img, out, buffer_int[i], block_size, offset);
+        if (ret < 0) return ret;
         if (*offset < 0) {
             break;
         }
     }
+    free(double_ind_block_buffer);
     return 0;
 }
