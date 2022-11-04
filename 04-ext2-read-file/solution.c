@@ -54,17 +54,15 @@ int dump_file(int img, int inode_nr, int out) {
     //copy
     long size = inode.i_size;
     for (size_t i = 0; i < EXT2_NDIR_BLOCKS; ++i) {
-        int ret = handle_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, 
-                                    //    buffer, 
-                                       &size);
+        int ret = handle_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, &size);
         if (ret < 0) return ret;
     }
-    ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
+    ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS], BLOCK_SIZE,
                             &size);
     if (ret < 0) {
         return ret;
     }
-    ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 2], BLOCK_SIZE,
+    ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
                             &size);
     if (ret < 0) {
         return ret;
