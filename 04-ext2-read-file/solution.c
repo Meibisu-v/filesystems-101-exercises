@@ -13,12 +13,10 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
 int handle_double_ind_block(int img, int out, uint i_block, uint block_size, 
                             long *offset);
 
-
-char *buffer = NULL;
-char *ind_block_buffer = NULL;
-char *double_ind_block_buffer = NULL;
-
 int dump_file(int img, int inode_nr, int out) {
+    (void) img;
+    (void) inode_nr;
+    (void) out;
     // read superblock
     struct ext2_super_block s_block;
     int ret = lseek(img, BLOCK_INIT, SEEK_SET);
@@ -31,7 +29,7 @@ int dump_file(int img, int inode_nr, int out) {
     }	
     // 
     uint BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
-    // 
+    // таблица дескрипторов
     struct ext2_group_desc g_desc;
     ret = lseek(img, (s_block.s_first_data_block + 1) * BLOCK_SIZE, SEEK_SET);
     if (ret < 0) {
@@ -55,37 +53,34 @@ int dump_file(int img, int inode_nr, int out) {
     }
     //copy
     long size = inode.i_size;
-    buffer = malloc(BLOCK_SIZE * sizeof(char));
     for (size_t i = 0; i < EXT2_NDIR_BLOCKS; ++i) {
-        int ret = handle_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, &size);
+        int ret = handle_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, 
+                                    //    buffer, 
+                                       &size);
         if (ret < 0) return ret;
     }
-    ind_block_buffer = malloc(BLOCK_SIZE * sizeof(char));
-    ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS], BLOCK_SIZE,
+    ret = handle_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
                             &size);
     if (ret < 0) {
         return ret;
     }
-    double_ind_block_buffer = malloc(BLOCK_SIZE * sizeof(char));
-    ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 1], BLOCK_SIZE,
+    ret = handle_double_ind_block(img, out, inode.i_block[EXT2_NDIR_BLOCKS + 2], BLOCK_SIZE,
                             &size);
     if (ret < 0) {
         return ret;
     }    
-    free(buffer);
-    free(double_ind_block_buffer);
-    free(ind_block_buffer);
     return 0;
 }
 
 
 int handle_direct_blocks(int img, int out, uint i_block, uint block_size,
                          long *offset) {
+    char buffer[block_size];
     int ret = lseek(img, i_block * block_size, SEEK_SET);
     if (ret < 0) {
         return -errno;
     }
-    ret = read(img, &buffer, block_size) < 0;
+    ret = read(img, buffer, block_size) < 0;
     if (ret < 0) {
         return -errno;
     }
@@ -102,17 +97,17 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
     if (ret < 0) {
         return -errno;
     }
-    if (read(img, &ind_block_buffer, block_size) < 0) {
+    char ind_block_buffer[block_size];
+    if (read(img, ind_block_buffer, block_size) < 0) {
         return -errno;
     }
     for (uint i = 0; i < block_size / 4; ++i) {
-        if (*offset <= 0) break;
-        if ((int)ind_block_buffer[i] == 0) break;
-        ret = handle_direct_blocks(img, out, ind_block_buffer[i], 
-                                    block_size, offset);
+        ret = handle_direct_blocks(img, out, ind_block_buffer[i], block_size, 
+            offset);
         if (ret < 0) {
             return ret;
         }
+        if (*offset < 0) break;
     }
     return 0;
 }
@@ -122,13 +117,14 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
     if (ret < 0) {
         return -errno;
     }
-    if (read(img, &double_ind_block_buffer, block_size) < 0) {
+    char double_ind_block_buffer[block_size];
+    if (read(img, double_ind_block_buffer, block_size) < 0) {
         return -errno;
     }
     for (uint i = 0; i < block_size / 4; ++ i) {
         handle_ind_block(img, out, double_ind_block_buffer[i], 
                             block_size, offset);
-        if (*offset <= 0) {
+        if (*offset < 0) {
             break;
         }
     }
