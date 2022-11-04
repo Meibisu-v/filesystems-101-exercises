@@ -43,8 +43,8 @@ int dump_file(int img, int inode_nr, int out) {
     }
     // 
     struct ext2_inode inode;
-    int index = (inode_nr - 1) % s_block.s_inodes_per_group;
-    int pos = g_desc.bg_inode_table * BLOCK_SIZE + 
+    uint index = (inode_nr - 1) % s_block.s_inodes_per_group;
+    uint pos = g_desc.bg_inode_table * BLOCK_SIZE + 
             (index * s_block.s_inode_size);
     ret = lseek(img, pos, SEEK_SET);
     if (ret < 0) {
@@ -104,7 +104,7 @@ int handle_ind_block(int img, int out, uint i_block, uint block_size,
         return -errno;
     }
     for (uint i = 0; i < block_size / 4; ++i) {
-        ret = handle_direct_blocks(img, out, ind_block_buffer[i], block_size, 
+        ret = handle_direct_blocks(img, out, (uint)ind_block_buffer[i], block_size, 
             offset);
         if (ret < 0) {
             return ret;
@@ -124,7 +124,7 @@ int handle_double_ind_block(int img, int out, uint i_block, uint block_size,
         return -errno;
     }
     for (uint i = 0; i < block_size / 4; ++ i) {
-        handle_ind_block(img, out, double_ind_block_buffer[i], 
+        handle_ind_block(img, out, (uint)double_ind_block_buffer[i], 
                             block_size, offset);
         if (*offset < 0) {
             break;
