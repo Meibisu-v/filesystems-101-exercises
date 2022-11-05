@@ -7,10 +7,8 @@
 #define BLOCK_INIT 1024
 
 int handle_direct_blocks(int img, uint i_block, uint block_size);
-// int handle_ind_block(int img, uint i_block, uint block_size, 
-//                      long *offset);
-// int handle_double_ind_block(int img, uint i_block, uint block_size, 
-                            // long *offset);
+int handle_ind_block(int img, uint i_block, uint block_size);
+int handle_double_ind_block(int img, uint i_block, uint block_size);
 
 int dump_dir(int img, int inode_nr) {
 	// read superblock
@@ -44,26 +42,18 @@ int dump_dir(int img, int inode_nr) {
             int ret = handle_direct_blocks(img, inode.i_block[i], BLOCK_SIZE);
             if (ret < 0) return ret;
         }
-        // if (i == EXT2_IND_BLOCK) {
-        //     ret = handle_ind_block(img, inode.i_block[i], BLOCK_SIZE,
-        //                             &size);
-        //     if (ret < 0) {
-        //         return ret;
-        //     }
-        // }
-        // // if (i == EXT2_DIND_BLOCK) {
-        //     ret = handle_double_ind_block(img, inode.i_block[i], BLOCK_SIZE,
-        //                             &size);
-        //     if (ret < 0) {
-        //         return ret;
-        //     }  
-        // }
-		// if (i == EXT2_TIND_BLOCK) {
-		// 	ret = handle_tind_block();
-		// 	if (ret < 0) {
-		// 		return ret;
-		// 	}
-		// }
+        if (i == EXT2_IND_BLOCK) {
+            ret = handle_ind_block(img, inode.i_block[i], BLOCK_SIZE);
+            if (ret < 0) {
+                return ret;
+            }
+        }
+        if (i == EXT2_DIND_BLOCK) {
+            ret = handle_double_ind_block(img, inode.i_block[i], BLOCK_SIZE);
+            if (ret < 0) {
+                return ret;
+            }  
+        }
     }  
     return 0;
 }
@@ -132,3 +122,4 @@ int handle_double_ind_block(int img, uint i_block, uint block_size) {
     free(double_ind_block_buffer);
     return 0;
 }
+
