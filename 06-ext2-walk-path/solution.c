@@ -222,7 +222,10 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     }
     return ret;
 }
-
+int compare_dir_name(const char* dir1, const char* dir2, int len1, int len2) {
+    if ((len1 == len2) && !strncmp(dir1, dir2, len1)) return 1;
+    return 0;
+}
 int handle_direct_block(int img, int type, const char* path, int *inode_nr, 
                         int i_block) {
     struct ext2_dir_entry_2 dir_entry;
@@ -241,8 +244,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         char *next_dir = strtok(path_copy, "/");
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
-        if (dir_entry.name_len == next_dir_len 
-                && strncmp(name, next_dir, dir_entry.name_len) == 0) {
+        if (compare_dir_name(name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
             if (dir_entry.file_type != type) {
                 return -ENOTDIR;
             }    
