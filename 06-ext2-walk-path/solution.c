@@ -180,7 +180,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
         if (inode.i_block[i] == 0) {
             // printf("get_inode_num_by_path(i_block[%ld]=0) ", i);
-            // return -ENOENT;
+            return -ENOENT;
         }
         if (i < EXT2_NDIR_BLOCKS) {
             int ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
@@ -218,7 +218,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
             }
             continue;
         }
-        return -ENOENT;
+        // return -ENOENT;
     }
     return ret;
 }
@@ -263,7 +263,7 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
     }
     for (int i = 0; i < BLOCK_SIZE / 4; ++i) {
         if (buf[i] == 0) {            
-            return -ENOENT;
+            // return -ENOENT;
         }
         ret = handle_direct_block(img, type, path, inode_nr, buf[i]);
         if (ret < 0) {
