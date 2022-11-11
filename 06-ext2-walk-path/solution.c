@@ -44,11 +44,12 @@ int dump_file(int img, const char *path, int out) {
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
     if (ret < 0) {
-        // return ret;
+        return ret;
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
-    return copy_file(img, out, &inode);
+    ret = copy_file(img, out, &inode);
+    return 0;
 }
 
 
