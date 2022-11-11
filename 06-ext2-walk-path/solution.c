@@ -276,7 +276,7 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
 
 int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr,
                         uint *buf) {
-    int dir_buf[BLOCK_SIZE];
+    uint dir_buf[BLOCK_SIZE];
     int ret = pread(img, buf, BLOCK_SIZE, i_block * BLOCK_SIZE);
     if (ret < 0) {
         return -errno;
