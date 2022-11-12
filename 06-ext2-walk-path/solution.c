@@ -267,7 +267,7 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
     if (ret < 0) {
         return -errno;
     }
-    for (int i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
+    for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
         if (buf[i] == 0) {            
             return -ENOENT;
         }
@@ -286,7 +286,7 @@ int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr
     if (ret < 0) {
         return -errno;
     }
-    for (int i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
+    for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
         ret = handle_ind_block(img, buf[i], type, path, inode_nr, dir_buf);
         if (ret <= 0) {
             return ret;
