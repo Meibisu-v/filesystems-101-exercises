@@ -198,6 +198,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         if (i == EXT2_IND_BLOCK) {
             uint dir_buf[BLOCK_SIZE];
+            memset(dir_buf, 0, BLOCK_SIZE);
             ret = handle_ind_block(img, type, inode.i_block[i], path, inode_nr, dir_buf);
             if (ret < 0) {
                 return ret;
@@ -211,6 +212,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         if (i == EXT2_DIND_BLOCK) {
             uint dind_buf[BLOCK_SIZE];
+            memset(dind_buf, 0, BLOCK_SIZE);
             ret = handle_indir_block(img, type, inode.i_block[i], path, inode_nr, dind_buf);
             if (ret < 0) {
                 return ret;
