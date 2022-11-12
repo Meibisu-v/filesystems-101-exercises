@@ -25,10 +25,6 @@ int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr
                         uint *buf);
 int copy_file(int img, int out, int inode_nr);
 
-void fill_path(char *dest, const char* from, int len) {
-    memset(dest, '\0', PATH_SIZE);
-    strncpy(dest, from, len);
-}
 int dump_file(int img, const char *path, int out) {
     // read superblock
     struct ext2_super_block s_block;
@@ -209,13 +205,11 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         if (i < EXT2_NDIR_BLOCKS) {
             ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
-        } else
-        if (i == EXT2_IND_BLOCK) {
+        } else if (i == EXT2_IND_BLOCK) {
             uint *dir_buf = calloc(1, BLOCK_SIZE);
             ret = handle_ind_block(img, inode.i_block[i], type, path, inode_nr, dir_buf);
             free(dir_buf);
-        }else 
-        if (i == EXT2_DIND_BLOCK) {
+        } else if (i == EXT2_DIND_BLOCK) {
             uint *dind_buf = calloc(1, BLOCK_SIZE);
             ret = handle_indir_block(img, inode.i_block[i], type, path, inode_nr, dind_buf);
             free(dind_buf);
@@ -252,15 +246,10 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr, int 
         }
         int path_size = strlen(path);
         char path_copy[path_size + 1];
-        char name[PATH_SIZE];
-        snprintf(name, dir_entry.name_len, "%s", dir_entry.name);
-        name[dir_entry.name_len + 1] = '\0';
         snprintf(path_copy, path_len + 1, "%s", path);
         path_copy[path_len] = '\0';
         char *next_dir = strtok(path_copy, "/");
-        // printf("%s\n", path);
         int next_dir_len = strlen(next_dir);
-        // printf("entry name: %s, dir_name: %s\n", next_dir, name);
         if (compare_dir_name(dir_entry.name, next_dir, dir_entry.name_len, next_dir_len) == 1) {
             if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
                 return -ENOTDIR;
