@@ -51,7 +51,7 @@ int dump_file(int img, const char *path, int out) {
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
-    assert(ret == 0);
+    assert(ret > 0);
     ret = copy_file(img, out, &inode);
     assert(ret == 0);
     return 0;
