@@ -237,8 +237,7 @@ int compare_dir_name(const char* dir1, const char* dir2, int len1, int len2) {
         if (strncmp(dir1, dir2, len1) == 0) return 1;
     return 0;
 }
-int handle_direct_block(int img, int type, const char* path, int *inode_nr, 
-                        int i_block) {
+int handle_direct_block(int img, int type, const char* path, int *inode_nr, int i_block) {
     struct ext2_dir_entry_2 dir_entry = {};
     off_t start = BLOCK_SIZE * i_block;
     off_t cur = start;
@@ -246,21 +245,18 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
     while (cur < start + BLOCK_SIZE) {
         int ret = pread(img, &dir_entry, sizeof(dir_entry), cur);
         if (ret < 0) {
-            // assert(0);
             return -errno;
         }
         if(dir_entry.inode == 0){
-            // assert(0);
             return -ENOENT;
         }
-        char path_copy[PATH_SIZE];
+        int path_size = strlen(path);
+        char path_copy[path_size + 1];
         char name[PATH_SIZE];
-        memset(name, '\0', PATH_SIZE);
-        memcpy(name, dir_entry.name, dir_entry.name_len);
-
+        snprintf(name, dir_entry.name_len, "%s", dir_entry.name);
+        name[dir_entry.name_len + 1] = '\0';
         snprintf(path_copy, path_len + 1, "%s", path);
         path_copy[path_len] = '\0';
-
         char *next_dir = strtok(path_copy, "/");
         // printf("%s\n", path);
         int next_dir_len = strlen(next_dir);
@@ -287,7 +283,6 @@ int handle_ind_block(int img, int i_block, int type, const char*path, int *inode
             return -ENOENT;
         }
         ret = handle_direct_block(img, type, path, inode_nr, buf[i]);
-        // assert(ret >= 0);  
         if (ret <= 0) {
             return ret;
         }
@@ -295,8 +290,7 @@ int handle_ind_block(int img, int i_block, int type, const char*path, int *inode
     return ret;
 }
 
-int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr,
-                        uint *buf) {
+int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr, uint *buf) {
     uint *dir_buf = calloc(1, BLOCK_SIZE);
     int ret = pread(img, buf, BLOCK_SIZE, i_block * BLOCK_SIZE);
     if (ret < 0) {
