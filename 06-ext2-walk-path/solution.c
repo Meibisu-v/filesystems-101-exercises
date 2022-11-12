@@ -50,11 +50,11 @@ int dump_file(int img, const char *path, int out) {
         return ret;
     }
     struct ext2_inode inode;
-    handle_inode(img, &inode_nr, &s_block, &inode);
+    ret = handle_inode(img, &inode_nr, &s_block, &inode);
     assert(ret == 0);
     ret = copy_file(img, out, &inode);
     assert(ret == 0);
-    return 0;
+    return ret;
 }
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
                          long *offset) {
