@@ -31,9 +31,9 @@ void fill_path(char *dest, const char* from, int len) {
 }
 int dump_file(int img, const char *path, int out) {
     // read superblock
-    (void) out;
     struct ext2_super_block s_block;
     int ret =  pread(img, &s_block, sizeof(s_block), BLOCK_INIT);
+    assert(ret >= 0);
     if (ret < 0) {
         return -errno;
     }    
