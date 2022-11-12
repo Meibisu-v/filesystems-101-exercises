@@ -46,15 +46,10 @@ int dump_file(int img, const char *path, int out) {
     //------------------------------------------
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
-    // assert(ret >= 0);
     if (ret < 0) {
         return ret;
     }
-    // struct ext2_inode inode;
-    // ret = handle_inode(img, &inode_nr, &s_block, &inode);
-    // assert(ret == 0);
     ret = copy_file(img, out, inode_nr);
-    // assert(ret == 0);
     return ret;
 }
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
@@ -184,17 +179,13 @@ int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_
 int goto_next_dir(int img, int *inode_nr, 
                     struct ext2_super_block *s_block, const char* path) {
     char *next_path = strchr(path + 1, '/');
-    // fprintf(stderr, "%s \n", next_path);
     return get_inode_num_by_path(img, inode_nr, s_block, next_path);
 }
 int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
                             char *path) {
-    // printf("get_inode_num_by_path %s\n", path);
     int ret = -1;
-    // ++path;
     struct ext2_inode inode;
     ret = handle_inode(img, inode_nr, s_block, &inode);
-    // assert(ret >= 0);
     if (ret < 0) {
         return ret;
     }
@@ -205,10 +196,9 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     copy[path_len] = '\0';
     char *dir = strtok(copy, "/");
     int remain_path_len = path_len - strlen(dir) - 1;
-    // printf("dir: %s\n remain_path_len %d\n path : %s\n",dir, remain_path_len, path);
     int type = EXT2_FT_DIR;
     if (remain_path_len== 0) {
-        type = EXT2_FT_UNKNOWN;
+        type = EXT2_FT_REG_FILE;
     }    
     //----------------------------
     //-------------------------------
@@ -219,21 +209,17 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         if (i < EXT2_NDIR_BLOCKS) {
             ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
-        // assert(ret >= 0);  
         } else
         if (i == EXT2_IND_BLOCK) {
             uint *dir_buf = calloc(1, BLOCK_SIZE);
             ret = handle_ind_block(img, inode.i_block[i], type, path, inode_nr, dir_buf);
             free(dir_buf);
-        // assert(ret >= 0);  
         }else 
         if (i == EXT2_DIND_BLOCK) {
             uint *dind_buf = calloc(1, BLOCK_SIZE);
             ret = handle_indir_block(img, inode.i_block[i], type, path, inode_nr, dind_buf);
             free(dind_buf);
-        // assert(ret >= 0);  
         } else {
-            // assert(0);
             return -ENOENT;
         } 
         if (ret < 0) return ret;
@@ -279,20 +265,16 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         // printf("%s\n", path);
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
-        if (strlen(name) == (uint)next_dir_len) {
-            if (strncmp(name, next_dir, next_dir_len) == 0) {
-                if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
-                    // assert(0);
-                    return -ENOTDIR;
-                }    
-                *inode_nr = dir_entry.inode;
-                return 0;
-            }
+        if (compare_dir_name(dir_entry.name, next_dir, dir_entry.name_len, next_dir_len)) {
+            if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
+                return -ENOTDIR;
+            }    
+            *inode_nr = dir_entry.inode;
+            return 0;
         }
         cur += dir_entry.rec_len;
-        printf("rec_len = %d dir_name = %s\n", dir_entry.rec_len, name);
     }
-    return 1;
+    return -1;
 }
 int handle_ind_block(int img, int i_block, int type, const char*path, int *inode_nr,
                         uint *buf) {
@@ -301,8 +283,7 @@ int handle_ind_block(int img, int i_block, int type, const char*path, int *inode
         return -errno;
     }
     for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
-        if (buf[i] == 0) {          
-            // assert(1);  
+        if (buf[i] == 0) {   
             return -ENOENT;
         }
         ret = handle_direct_block(img, type, path, inode_nr, buf[i]);
