@@ -226,7 +226,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         return -ENOENT;
     }
-    return ret;
+    return 0;
 }
 int compare_dir_name(const char* dir1, const char* dir2, int len1, int len2) {
     if ((len1 == len2) && !strncmp(dir1, dir2, len1)) return 1;
