@@ -23,7 +23,7 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
                         uint *buf);                        
 int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr,
                         uint *buf);
-int copy_file(int img, int out, struct ext2_inode *inode);
+int copy_file(int img, int out, int inode_nr);
 
 void fill_path(char *dest, const char* from, int len) {
     memset(dest, '\0', PATH_SIZE);
@@ -49,10 +49,10 @@ int dump_file(int img, const char *path, int out) {
     if (ret < 0) {
         return ret;
     }
-    struct ext2_inode inode;
-    ret = handle_inode(img, &inode_nr, &s_block, &inode);
-    assert(ret == 0);
-    ret = copy_file(img, out, &inode);
+    // struct ext2_inode inode;
+    // ret = handle_inode(img, &inode_nr, &s_block, &inode);
+    // assert(ret == 0);
+    ret = copy_file(img, out, inode_nr);
     assert(ret == 0);
     return ret;
 }
@@ -111,25 +111,48 @@ int copy_double_ind_block(int img, int out, uint i_block, uint block_size,
     return 0;
 }
 
-int copy_file(int img, int out, struct ext2_inode *inode) {
+int copy_file(int img, int out, int inode_nr) {
 
-    long size = inode->i_size;
-    int ret;
+    // read superblock
+    struct ext2_super_block s_block;
+    int ret =  pread(img, &s_block, sizeof(s_block), BLOCK_INIT);
+    if (ret < 0) {
+        return -errno;
+    }	
+    
+    int BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
+    // таблица дескрипторов
+    struct ext2_group_desc g_desc;
+    uint offset = BLOCK_SIZE * (s_block.s_first_data_block + 1) 
+            + (inode_nr - 1) / s_block.s_inodes_per_group * sizeof(g_desc);
+    ret = pread(img, &g_desc, sizeof(g_desc), offset);
+    if (ret < 0) {
+        return -errno;
+    }
+    // 
+    struct ext2_inode inode;
+    uint index = (inode_nr - 1) % s_block.s_inodes_per_group;
+    uint pos = g_desc.bg_inode_table * BLOCK_SIZE + 
+            (index * s_block.s_inode_size);
+    if (pread(img, &inode, sizeof(inode), pos) < 0) {
+        return -errno;
+    }
+    long size = inode.i_size;
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
         if (i < EXT2_NDIR_BLOCKS) {
-            ret = copy_direct_blocks(img, out, inode->i_block[i], BLOCK_SIZE, 
+            ret = copy_direct_blocks(img, out, inode.i_block[i], BLOCK_SIZE, 
                                         &size);
             if (ret < 0) return ret;
         }
         if (i == EXT2_IND_BLOCK) {
-            ret = copy_ind_block(img, out, inode->i_block[i], BLOCK_SIZE,
+            ret = copy_ind_block(img, out, inode.i_block[i], BLOCK_SIZE,
                                     &size);
             if (ret < 0) {
                 return ret;
             }
         }
         if (i == EXT2_DIND_BLOCK) {
-            ret = copy_double_ind_block(img, out, inode->i_block[i], BLOCK_SIZE,
+            ret = copy_double_ind_block(img, out, inode.i_block[i], BLOCK_SIZE,
                                     &size);
             if (ret < 0) {
                 return ret;
