@@ -197,6 +197,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     // ++path;
     struct ext2_inode inode;
     ret = handle_inode(img, inode_nr, s_block, &inode);
+    assert(ret >= 0);
     if (ret < 0) {
         return ret;
     }
@@ -231,8 +232,11 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
             uint *dind_buf = calloc(1, BLOCK_SIZE);
             ret = handle_indir_block(img, type, inode.i_block[i], path, inode_nr, dind_buf);
             free(dind_buf);
-        } else 
-        return -ENOENT;
+        } else {
+            assert(1);
+            return -ENOENT;
+        }
+        assert(ret >= 0);   
         if (ret < 0) return ret;
         if (ret == 0) {
             if (remain_path_len != 0) {
