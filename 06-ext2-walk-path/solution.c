@@ -236,6 +236,8 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
                         int i_block) {
     struct ext2_dir_entry_2 dir_entry;
     int start = BLOCK_SIZE * i_block;
+    char path_copy[PATH_SIZE];
+    char name[PATH_SIZE];
     int cur = start;
     while (cur - start < BLOCK_SIZE) {
         int ret = pread(img, &dir_entry, sizeof(dir_entry), cur);
@@ -243,9 +245,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
             return -errno;
         }
         int path_len = strlen(path);
-        char path_copy[PATH_SIZE];
         fill_path(path_copy, path, path_len);
-        char name[PATH_SIZE];
         fill_path(name, dir_entry.name, dir_entry.name_len);
         char *next_dir = strtok(path_copy, "/");
         int next_dir_len = strlen(next_dir);
