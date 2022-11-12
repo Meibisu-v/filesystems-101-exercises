@@ -212,48 +212,31 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     //----------------------------
     //-------------------------------
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
+        int ret = 0;
         if (inode.i_block[i] == 0) {
             return -ENOENT;
         }
         if (i < EXT2_NDIR_BLOCKS) {
-            int ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
-            if (ret < 0) return ret;
-            if (ret == 0) {
-                if (remain_path_len != 0) {
-                    return goto_next_dir(img, inode_nr, s_block, path);
-                }
-                break;
-            }
+            ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
         } else
         if (i == EXT2_IND_BLOCK) {
             uint *dir_buf = calloc(1, BLOCK_SIZE);
             ret = handle_ind_block(img, type, inode.i_block[i], path, inode_nr, dir_buf);
             free(dir_buf);
-            if (ret < 0) {
-                return ret;
-            }
-            if (ret == 0) {
-                if (remain_path_len != 0) {                
-                    return goto_next_dir(img, inode_nr, s_block, path);
-                }
-                break;
-            }
         }else 
         if (i == EXT2_DIND_BLOCK) {
             uint *dind_buf = calloc(1, BLOCK_SIZE);
             ret = handle_indir_block(img, type, inode.i_block[i], path, inode_nr, dind_buf);
             free(dind_buf);
-            if (ret < 0) {
-                return ret;
-            }
-            if (ret == 0) {
-                if (remain_path_len != 0) {
-                    return goto_next_dir(img, inode_nr, s_block, path);
-                }
-                break;
-            }
         } else 
         return -ENOENT;
+        if (ret < 0) return ret;
+        if (ret == 0) {
+            if (remain_path_len != 0) {
+                return goto_next_dir(img, inode_nr, s_block, path);
+            }
+            break;
+        }
     }
     return 0;
 }
