@@ -255,9 +255,8 @@ int compare_dir_name(const char* dir1, const char* dir2, int len1, int len2) {
 }
 int handle_direct_block(int img, int type, const char* path, int *inode_nr, 
                         int i_block) {
-    struct ext2_dir_entry_2 dir_entry;
+    struct ext2_dir_entry_2 dir_entry = {};
     off_t start = BLOCK_SIZE * i_block;
-    char path_copy[PATH_SIZE];
     off_t cur = start;
     int path_len = strlen(path);
     while (cur < start + BLOCK_SIZE) {
@@ -267,15 +266,22 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
             return -errno;
         }
         if(dir_entry.inode == 0){
-            // assert(0);
-            // return -ENOENT;
+            assert(0);
+            return -ENOENT;
         }
+        char path_copy[PATH_SIZE];
+        char name[PATH_SIZE];
+        memset(name, '\0', PATH_SIZE);
+        memcpy(name, dir_entry.name, dir_entry.name_len);
+
         snprintf(path_copy, path_len + 1, "%s", path);
         path_copy[path_len] = '\0';
+
         char *next_dir = strtok(path_copy, "/");
+        // printf("%s\n", next_dir);
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
-        if (compare_dir_name(dir_entry.name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
+        if (compare_dir_name(name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
             if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
                 assert(0);
                 return -ENOTDIR;
