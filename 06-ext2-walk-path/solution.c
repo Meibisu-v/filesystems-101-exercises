@@ -34,7 +34,7 @@ int dump_file(int img, const char *path, int out) {
     struct ext2_super_block s_block;
     int ret =  pread(img, &s_block, sizeof(s_block), BLOCK_INIT);
     if (ret < 0) {
-        return -errno;
+        // return -errno;
     }    
     BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
     //-----------------------------------------------
@@ -45,7 +45,7 @@ int dump_file(int img, const char *path, int out) {
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
     if (ret < 0) {
-        return ret;
+        // return ret;
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
@@ -229,7 +229,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     return 0;
 }
 int compare_dir_name(const char* dir1, const char* dir2, int len1, int len2) {
-    if ((len1 == len2) && !strncmp(dir1, dir2, len1)) return 1;
+    if ((len1 == len2) && (!strncmp(dir1, dir2, len1)) ) return 1;
     return 0;
 }
 int handle_direct_block(int img, int type, const char* path, int *inode_nr, 
@@ -267,7 +267,7 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
     if (ret < 0) {
         return -errno;
     }
-    for (int i = 0; i < BLOCK_SIZE / 4; ++i) {
+    for (int i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
         if (buf[i] == 0) {            
             return -ENOENT;
         }
@@ -286,7 +286,7 @@ int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr
     if (ret < 0) {
         return -errno;
     }
-    for (int i = 0; i < BLOCK_SIZE / 4; ++i) {
+    for (int i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
         ret = handle_ind_block(img, buf[i], type, path, inode_nr, dir_buf);
         if (ret <= 0) {
             return ret;
