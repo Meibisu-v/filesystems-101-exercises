@@ -267,8 +267,8 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
             return -errno;
         }
         if(dir_entry.inode == 0){
-            assert(0);
-            return -ENOENT;
+            // assert(0);
+            // return -ENOENT;
         }
         snprintf(path_copy, path_len + 1, "%s", path);
         path_copy[path_len] = '\0';
