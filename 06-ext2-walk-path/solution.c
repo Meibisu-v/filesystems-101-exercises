@@ -281,13 +281,15 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         // printf("%s\n", next_dir);
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
-        if (compare_dir_name(name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
-            if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
-                assert(0);
-                return -ENOTDIR;
-            }    
-            *inode_nr = dir_entry.inode;
-            return 0;
+        if (strlen(name) == (uint)next_dir_len) {
+            if (strncmp(name, next_dir, next_dir_len) == 0) {
+                if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
+                    assert(0);
+                    return -ENOTDIR;
+                }    
+                *inode_nr = dir_entry.inode;
+                return 0;
+            }
         }
         cur += dir_entry.rec_len;
     }
