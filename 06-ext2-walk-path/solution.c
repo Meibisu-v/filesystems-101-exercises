@@ -263,9 +263,11 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
     while (cur < start + BLOCK_SIZE) {
         int ret = pread(img, &dir_entry, sizeof(dir_entry), cur);
         if (ret < 0) {
+            assert(1);
             return -errno;
         }
         if(dir_entry.inode == 0){
+            assert(1);
             return -ENOENT;
         }
         snprintf(path_copy, path_len + 1, "%s", path);
@@ -275,6 +277,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
         if (compare_dir_name(dir_entry.name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
             if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
+                assert(1);
                 return -ENOTDIR;
             }    
             *inode_nr = dir_entry.inode;
