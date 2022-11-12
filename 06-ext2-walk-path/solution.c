@@ -265,7 +265,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         // printf("%s\n", path);
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
-        if (compare_dir_name(dir_entry.name, next_dir, dir_entry.name_len, next_dir_len)) {
+        if (compare_dir_name(dir_entry.name, next_dir, dir_entry.name_len, next_dir_len) == 1) {
             if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
                 return -ENOTDIR;
             }    
@@ -274,7 +274,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         }
         cur += dir_entry.rec_len;
     }
-    return -1;
+    return 1;
 }
 int handle_ind_block(int img, int i_block, int type, const char*path, int *inode_nr,
                         uint *buf) {
