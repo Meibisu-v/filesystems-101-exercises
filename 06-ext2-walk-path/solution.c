@@ -282,7 +282,7 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
 
 int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr,
                         uint *buf) {
-    uint dir_buf[BLOCK_SIZE];
+    uint *dir_buf = calloc(1, BLOCK_SIZE);
     int ret = pread(img, buf, BLOCK_SIZE, i_block * BLOCK_SIZE);
     if (ret < 0) {
         return -errno;
@@ -290,8 +290,10 @@ int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr
     for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
         ret = handle_ind_block(img, buf[i], type, path, inode_nr, dir_buf);
         if (ret <= 0) {
+            free(dir_buf);
             return ret;
         }
     }
+    free(dir_buf);
     return 0;
 }
