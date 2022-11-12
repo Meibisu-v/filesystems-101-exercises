@@ -225,13 +225,13 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         } else
         if (i == EXT2_IND_BLOCK) {
             uint *dir_buf = calloc(1, BLOCK_SIZE);
-            ret = handle_ind_block(img, type, inode.i_block[i], path, inode_nr, dir_buf);
+            ret = handle_ind_block(img, inode.i_block[i], type, path, inode_nr, dir_buf);
             free(dir_buf);
         assert(ret >= 0);  
         }else 
         if (i == EXT2_DIND_BLOCK) {
             uint *dind_buf = calloc(1, BLOCK_SIZE);
-            ret = handle_indir_block(img, type, inode.i_block[i], path, inode_nr, dind_buf);
+            ret = handle_indir_block(img, inode.i_block[i], type, path, inode_nr, dind_buf);
             free(dind_buf);
         assert(ret >= 0);  
         } else {
@@ -324,7 +324,7 @@ int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr
         return -errno;
     }
     for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
-        ret = handle_ind_block(img, buf[i], type, path, inode_nr, dir_buf);
+        ret = handle_ind_block(img, type, buf[i], path, inode_nr, dir_buf);
         if (ret <= 0) {
             free(dir_buf);
             return ret;
