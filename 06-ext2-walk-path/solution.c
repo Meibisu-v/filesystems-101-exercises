@@ -79,6 +79,9 @@ int copy_ind_block(int img, int out, uint i_block, uint block_size,
     }
     uint *buffer_int = (uint*) buffer_indir;
     for (uint i = 0; i < block_size / 4; ++i) {
+        if (buffer_int[i] == 0) {
+            break;
+        }
         ret = copy_direct_blocks(img, out, buffer_int[i], block_size, offset);
         if (ret < 0) {
             return ret;
@@ -88,6 +91,7 @@ int copy_ind_block(int img, int out, uint i_block, uint block_size,
     free(buffer_indir);
     return 0;
 }
+
 int copy_double_ind_block(int img, int out, uint i_block, uint block_size, 
                             long *offset) {
     char* double_ind_block_buffer = malloc(sizeof(char) * block_size);
@@ -106,6 +110,7 @@ int copy_double_ind_block(int img, int out, uint i_block, uint block_size,
     free(double_ind_block_buffer);
     return 0;
 }
+
 int copy_file(int img, int out, struct ext2_inode *inode) {
 
     long size = inode->i_size;
@@ -171,13 +176,11 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         return ret;
     }
     //---------------------------
-    char copy[strlen(path) + 1];
-    memcpy(copy, path, strlen(path) + 1);
-    char *next_dir = strtok(copy,  "/");
-    char *dir = calloc(strlen(next_dir) + 1, sizeof(char));
-    strcpy(dir, next_dir);
-    int remain_path_len = strlen(path) - strlen(dir) - 1;
-    free(dir);
+    char next_dir[PATH_SIZE];
+    fill_path(next_dir, path, strlen(path));
+    strtok(next_dir, "/");
+    int next_dir_len = strlen(next_dir);
+    int remain_path_len = strlen(path) - next_dir_len;
     // printf("path: %s\n remain_path_len %d\n",next_dir, remain_path_len);
     int type = EXT2_FT_DIR;
     if (remain_path_len== 0) {
