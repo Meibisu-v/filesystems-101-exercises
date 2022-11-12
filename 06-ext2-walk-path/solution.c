@@ -9,7 +9,7 @@
 #define BLOCK_INIT 1024
 #define PATH_SIZE 4096
 
-int BLOCK_SIZE = 0;
+uint BLOCK_SIZE = 0;
 
 int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
                             char *path);
@@ -51,7 +51,7 @@ int dump_file(int img, const char *path, int out) {
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
-    assert(ret > 0);
+    assert(ret == 0);
     ret = copy_file(img, out, &inode);
     assert(ret == 0);
     return 0;
@@ -171,11 +171,12 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         return ret;
     }
     //---------------------------
-    char next_dir[PATH_SIZE];
-    fill_path(next_dir, path, strlen(path));
-    strtok(next_dir, "/");
-    int next_dir_len = strlen(next_dir);
-    int remain_path_len = strlen(path) - next_dir_len;
+    char copy[strlen(path) + 1];
+    memcpy(copy, path, strlen(path) + 1);
+    char *next_dir = strtok(copy,  "/");
+    char *dir = calloc(strlen(next_dir) + 1, sizeof(char));
+    strcpy(dir, next_dir);
+    int remain_path_len = strlen(path) - strlen(dir) - 1;
     // printf("path: %s\n remain_path_len %d\n",next_dir, remain_path_len);
     int type = EXT2_FT_DIR;
     if (remain_path_len== 0) {
@@ -236,10 +237,10 @@ int compare_dir_name(const char* dir1, const char* dir2, int len1, int len2) {
 int handle_direct_block(int img, int type, const char* path, int *inode_nr, 
                         int i_block) {
     struct ext2_dir_entry_2 dir_entry;
-    int start = BLOCK_SIZE * i_block;
+    uint start = BLOCK_SIZE * i_block;
     char path_copy[PATH_SIZE];
     char name[PATH_SIZE];
-    int cur = start;
+    uint cur = start;
     while (cur - start < BLOCK_SIZE) {
         int ret = pread(img, &dir_entry, sizeof(dir_entry), cur);
         if (ret < 0) {
