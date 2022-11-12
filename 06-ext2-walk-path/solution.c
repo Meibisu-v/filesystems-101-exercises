@@ -19,7 +19,7 @@ int get_inode(int img, int inode_nr, struct ext2_super_block s_block);
 
 int handle_direct_block(int img, int type, const char* path, int *inode_nr, 
                         int i_block);
-int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
+int handle_ind_block(int img, int i_block, int type, const char*path, int *inode_nr,
                         uint *buf);                        
 int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr,
                         uint *buf);
@@ -284,17 +284,19 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
     }
     return 1;
 }
-int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
+int handle_ind_block(int img, int i_block, int type, const char*path, int *inode_nr,
                         uint *buf) {
     int ret = pread(img, buf, BLOCK_SIZE, BLOCK_SIZE * i_block);
     if (ret < 0) {
         return -errno;
     }
     for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
-        if (buf[i] == 0) {            
+        if (buf[i] == 0) {          
+            assert(1);  
             return -ENOENT;
         }
         ret = handle_direct_block(img, type, path, inode_nr, buf[i]);
+        assert(ret >= 0);  
         if (ret <= 0) {
             return ret;
         }
