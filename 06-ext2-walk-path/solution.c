@@ -45,7 +45,6 @@ int dump_file(int img, const char *path, int out) {
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
     if (ret < 0) {
-        assert(ret != -ENOENT);
         return ret;
     }
     struct ext2_inode inode;
@@ -53,8 +52,6 @@ int dump_file(int img, const char *path, int out) {
     ret = copy_file(img, out, &inode);
     return 0;
 }
-
-
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
                          long *offset) {
     char buffer[block_size];
@@ -156,6 +153,7 @@ int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_
 int goto_next_dir(int img, int *inode_nr, 
                     struct ext2_super_block *s_block, const char* path) {
     char *next_path = strchr(path + 1, '/');
+    printf("%s \n", next_path);
     return get_inode_num_by_path(img, inode_nr, s_block, next_path);
 }
 int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
@@ -170,13 +168,15 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     }
     //---------------------------
     char next_dir[PATH_SIZE];
-    strcpy(next_dir, path);
+    // strcpy(next_dir, path);
+    fill_path(next_dir, path, strlen(path));
     strtok(next_dir, "/");
     int next_dir_len = strlen(next_dir);
     int remain_path_len = strlen(path) - next_dir_len;
+    // printf("path: %s\n remain_path_len %d\n",next_dir, remain_path_len);
     int type = EXT2_FT_DIR;
     if (remain_path_len== 0) {
-        type = EXT2_FT_REG_FILE;
+        type = EXT2_FT_UNKNOWN;
     }    
     //----------------------------
     //-------------------------------
@@ -188,9 +188,10 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         if (i < EXT2_NDIR_BLOCKS) {
             int ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
             if (ret < 0) return ret;
-            if (ret == 0 && remain_path_len != 0) {
-                return goto_next_dir(img, inode_nr, s_block, path);
-            } else if (ret == 0) {
+            if (ret == 0) {
+                if (remain_path_len != 0) {
+                    return goto_next_dir(img, inode_nr, s_block, path);
+                }
                 break;
             }
             continue;
