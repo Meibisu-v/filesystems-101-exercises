@@ -177,8 +177,7 @@ int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_
     uint index = (*inode_nr - 1) % s_block->s_inodes_per_group;
     uint pos = g_desc.bg_inode_table * BLOCK_SIZE + 
             (index * s_block->s_inode_size);
-    struct ext2_inode inode_n;
-    if (pread(img, inode, sizeof(inode_n), pos) < 0) {
+    if (pread(img, inode, sizeof(struct ext2_inode), pos) < 0) {
         return -errno;
     }
     return 0;
@@ -222,6 +221,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         if (i < EXT2_NDIR_BLOCKS) {
             ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
+        assert(ret >= 0);  
         } else
         if (i == EXT2_IND_BLOCK) {
             uint *dir_buf = calloc(1, BLOCK_SIZE);
