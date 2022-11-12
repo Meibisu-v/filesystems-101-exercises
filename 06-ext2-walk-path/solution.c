@@ -40,8 +40,11 @@ int dump_file(int img, const char *path, int out) {
     BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
     //-----------------------------------------------
     int path_len = strlen(path);
-    char path_copy[PATH_SIZE];
-    fill_path(path_copy, path, path_len);
+    char path_copy[path_len + 1];    
+    // memset(path_copy, '\0', path_len + 1);
+    // strncpy(path_copy, path, path_len);
+    snprintf(path_copy, path_len + 1, "%s", path);
+    path_copy[path_len] = '\0';
     //------------------------------------------
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
@@ -112,7 +115,6 @@ int copy_double_ind_block(int img, int out, uint i_block, uint block_size,
 }
 
 int copy_file(int img, int out, int inode_nr) {
-
     // read superblock
     struct ext2_super_block s_block;
     int ret =  pread(img, &s_block, sizeof(s_block), BLOCK_INIT);
@@ -199,12 +201,13 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         return ret;
     }
     //---------------------------
-    char next_dir[PATH_SIZE];
-    fill_path(next_dir, path, strlen(path));
-    strtok(next_dir, "/");
-    int next_dir_len = strlen(next_dir);
-    int remain_path_len = strlen(path) - next_dir_len;
-    // printf("path: %s\n remain_path_len %d\n",next_dir, remain_path_len);
+    int path_len = strlen(path);
+    char copy[path_len + 1];    
+    snprintf(copy, path_len + 1, "%s", path);
+    copy[path_len] = '\0';
+    char *dir = strtok(copy, "/");
+    int remain_path_len = path_len - strlen(dir) - 1;
+    // printf("dir: %s\n remain_path_len %d\n path : %s\n",dir, remain_path_len, path);
     int type = EXT2_FT_DIR;
     if (remain_path_len== 0) {
         type = EXT2_FT_UNKNOWN;
