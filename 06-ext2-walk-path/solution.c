@@ -31,10 +31,11 @@ void fill_path(char *dest, const char* from, int len) {
 }
 int dump_file(int img, const char *path, int out) {
     // read superblock
+    (void) out;
     struct ext2_super_block s_block;
     int ret =  pread(img, &s_block, sizeof(s_block), BLOCK_INIT);
     if (ret < 0) {
-        // return -errno;
+        return -errno;
     }    
     BLOCK_SIZE = BLOCK_INIT << s_block.s_log_block_size;
     //-----------------------------------------------
@@ -49,7 +50,7 @@ int dump_file(int img, const char *path, int out) {
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
-    ret = copy_file(img, out, &inode);
+    // ret = copy_file(img, out, &inode);
     return 0;
 }
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
