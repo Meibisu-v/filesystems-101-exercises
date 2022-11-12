@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <ext2fs/ext2fs.h>
 #include <string.h>
+#include <assert.h>
 
 #define BLOCK_INIT 1024
 #define PATH_SIZE 4096
@@ -44,6 +45,7 @@ int dump_file(int img, const char *path, int out) {
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
     if (ret < 0) {
+        assert(ret != ENOENT);
         return ret;
     }
     struct ext2_inode inode;
