@@ -252,20 +252,22 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
     struct ext2_dir_entry_2 dir_entry;
     uint start = BLOCK_SIZE * i_block;
     char path_copy[PATH_SIZE];
-    char name[PATH_SIZE];
+    // char name[PATH_SIZE];
     uint cur = start;
-    while (cur - start < BLOCK_SIZE) {
+    int path_len = strlen(path);
+    while (cur < start + BLOCK_SIZE) {
         int ret = pread(img, &dir_entry, sizeof(dir_entry), cur);
         if (ret < 0) {
             return -errno;
         }
-        int path_len = strlen(path);
-        fill_path(path_copy, path, path_len);
-        fill_path(name, dir_entry.name, dir_entry.name_len);
+        snprintf(path_copy, path_len + 1, "%s", path);
+        path_copy[path_len] = '\0';
+        // fill_path(path_copy, path, path_len);
+        // fill_path(name, dir_entry.name, dir_entry.name_len);
         char *next_dir = strtok(path_copy, "/");
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
-        if (compare_dir_name(name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
+        if (compare_dir_name(dir_entry.name, next_dir, next_dir_len, dir_entry.name_len)==1)       {
             if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
                 return -ENOTDIR;
             }    
