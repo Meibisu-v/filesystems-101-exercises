@@ -52,7 +52,7 @@ int dump_file(int img, const char *path, int out) {
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
     ret = copy_file(img, out, &inode);
-    assert(ret > 0);
+    // assert(ret > 0);
     return 0;
 }
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
