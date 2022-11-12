@@ -45,14 +45,14 @@ int dump_file(int img, const char *path, int out) {
     //------------------------------------------
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
-    assert(ret == 0);
+    assert(ret >= 0);
     if (ret < 0) {
         return ret;
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
     ret = copy_file(img, out, &inode);
-    // assert(ret > 0);
+    assert(ret >= 0);
     return 0;
 }
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
