@@ -224,19 +224,20 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
             ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
         } else
         if (i == EXT2_IND_BLOCK) {
-            uint *dir_buf = calloc(1, BLOCK_SIZE);
+            uint dir_buf[BLOCK_SIZE];
             ret = handle_ind_block(img, type, inode.i_block[i], path, inode_nr, dir_buf);
-            free(dir_buf);
+            // free(dir_buf);
+        assert(ret >= 0);  
         }else 
         if (i == EXT2_DIND_BLOCK) {
-            uint *dind_buf = calloc(1, BLOCK_SIZE);
+            uint dind_buf[BLOCK_SIZE];
             ret = handle_indir_block(img, type, inode.i_block[i], path, inode_nr, dind_buf);
-            free(dind_buf);
+            // free(dind_buf);
+        assert(ret >= 0);  
         } else {
             assert(1);
             return -ENOENT;
-        }
-        assert(ret >= 0);   
+        } 
         if (ret < 0) return ret;
         if (ret == 0) {
             if (remain_path_len != 0) {
