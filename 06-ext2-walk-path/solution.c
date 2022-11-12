@@ -272,11 +272,11 @@ int handle_ind_block(int img, int i_block, int type, char*path, int *inode_nr,
             return -ENOENT;
         }
         ret = handle_direct_block(img, type, path, inode_nr, buf[i]);
-        if (ret < 0) {
+        if (ret <= 0) {
             return ret;
         }
     }
-    return 0;
+    return ret;
 }
 
 int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr,
@@ -288,7 +288,7 @@ int handle_indir_block(int img, int i_block, int type, char *path, int *inode_nr
     }
     for (int i = 0; i < BLOCK_SIZE / 4; ++i) {
         ret = handle_ind_block(img, buf[i], type, path, inode_nr, dir_buf);
-        if (ret < 0) {
+        if (ret <= 0) {
             return ret;
         }
     }
