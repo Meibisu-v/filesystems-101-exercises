@@ -177,6 +177,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     char *dir = calloc(strlen(next_dir) + 1, sizeof(char));
     strcpy(dir, next_dir);
     int remain_path_len = strlen(path) - strlen(dir) - 1;
+    free(dir);
     // printf("path: %s\n remain_path_len %d\n",next_dir, remain_path_len);
     int type = EXT2_FT_DIR;
     if (remain_path_len== 0) {
