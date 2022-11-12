@@ -278,7 +278,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         path_copy[path_len] = '\0';
 
         char *next_dir = strtok(path_copy, "/");
-        // printf("%s\n", next_dir);
+        // printf("%s\n", path);
         int next_dir_len = strlen(next_dir);
         // printf("entry name: %s, dir_name: %s\n", next_dir, name);
         if (strlen(name) == (uint)next_dir_len) {
@@ -292,6 +292,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
             }
         }
         cur += dir_entry.rec_len;
+        printf("rec_len = %d dir_name = %s\n", dir_entry.rec_len, name);
     }
     return 1;
 }
