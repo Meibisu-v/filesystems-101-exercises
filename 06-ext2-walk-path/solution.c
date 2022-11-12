@@ -41,14 +41,12 @@ int dump_file(int img, const char *path, int out) {
     //-----------------------------------------------
     int path_len = strlen(path);
     char path_copy[path_len + 1];    
-    // memset(path_copy, '\0', path_len + 1);
-    // strncpy(path_copy, path, path_len);
     snprintf(path_copy, path_len + 1, "%s", path);
     path_copy[path_len] = '\0';
     //------------------------------------------
     int inode_nr = EXT2_ROOT_INO;
     ret = get_inode_num_by_path(img, &inode_nr, &s_block, path_copy);
-    assert(ret >= 0);
+    // assert(ret >= 0);
     if (ret < 0) {
         return ret;
     }
@@ -56,7 +54,7 @@ int dump_file(int img, const char *path, int out) {
     // ret = handle_inode(img, &inode_nr, &s_block, &inode);
     // assert(ret == 0);
     ret = copy_file(img, out, inode_nr);
-    assert(ret == 0);
+    // assert(ret == 0);
     return ret;
 }
 int copy_direct_blocks(int img, int out, uint i_block, uint block_size,
@@ -196,7 +194,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     // ++path;
     struct ext2_inode inode;
     ret = handle_inode(img, inode_nr, s_block, &inode);
-    assert(ret >= 0);
+    // assert(ret >= 0);
     if (ret < 0) {
         return ret;
     }
@@ -221,21 +219,21 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
         }
         if (i < EXT2_NDIR_BLOCKS) {
             ret = handle_direct_block(img, type, path, inode_nr, inode.i_block[i]);
-        assert(ret >= 0);  
+        // assert(ret >= 0);  
         } else
         if (i == EXT2_IND_BLOCK) {
             uint *dir_buf = calloc(1, BLOCK_SIZE);
             ret = handle_ind_block(img, inode.i_block[i], type, path, inode_nr, dir_buf);
             free(dir_buf);
-        assert(ret >= 0);  
+        // assert(ret >= 0);  
         }else 
         if (i == EXT2_DIND_BLOCK) {
             uint *dind_buf = calloc(1, BLOCK_SIZE);
             ret = handle_indir_block(img, inode.i_block[i], type, path, inode_nr, dind_buf);
             free(dind_buf);
-        assert(ret >= 0);  
+        // assert(ret >= 0);  
         } else {
-            assert(1);
+            // assert(0);
             return -ENOENT;
         } 
         if (ret < 0) return ret;
@@ -262,11 +260,11 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
     while (cur < start + BLOCK_SIZE) {
         int ret = pread(img, &dir_entry, sizeof(dir_entry), cur);
         if (ret < 0) {
-            assert(0);
+            // assert(0);
             return -errno;
         }
         if(dir_entry.inode == 0){
-            assert(0);
+            // assert(0);
             return -ENOENT;
         }
         char path_copy[PATH_SIZE];
@@ -284,7 +282,7 @@ int handle_direct_block(int img, int type, const char* path, int *inode_nr,
         if (strlen(name) == (uint)next_dir_len) {
             if (strncmp(name, next_dir, next_dir_len) == 0) {
                 if (dir_entry.file_type != type && type == EXT2_FT_DIR) {
-                    assert(0);
+                    // assert(0);
                     return -ENOTDIR;
                 }    
                 *inode_nr = dir_entry.inode;
@@ -304,11 +302,11 @@ int handle_ind_block(int img, int i_block, int type, const char*path, int *inode
     }
     for (uint i = 0; i < BLOCK_SIZE / sizeof(uint); ++i) {
         if (buf[i] == 0) {          
-            assert(1);  
+            // assert(1);  
             return -ENOENT;
         }
         ret = handle_direct_block(img, type, path, inode_nr, buf[i]);
-        assert(ret >= 0);  
+        // assert(ret >= 0);  
         if (ret <= 0) {
             return ret;
         }
