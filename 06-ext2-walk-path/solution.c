@@ -156,7 +156,7 @@ int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_
 int goto_next_dir(int img, int *inode_nr, 
                     struct ext2_super_block *s_block, const char* path) {
     char *next_path = strchr(path + 1, '/');
-    printf("%s \n", next_path);
+    fprintf(stderr, "%s \n", next_path);
     return get_inode_num_by_path(img, inode_nr, s_block, next_path);
 }
 int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
@@ -185,7 +185,6 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     //-------------------------------
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
         if (inode.i_block[i] == 0) {
-            // printf("get_inode_num_by_path(i_block[%ld]=0) ", i);
             return -ENOENT;
         }
         if (i < EXT2_NDIR_BLOCKS) {
