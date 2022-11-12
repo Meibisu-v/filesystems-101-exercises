@@ -51,6 +51,7 @@ int dump_file(int img, const char *path, int out) {
     }
     struct ext2_inode inode;
     handle_inode(img, &inode_nr, &s_block, &inode);
+    assert(ret == 0);
     ret = copy_file(img, out, &inode);
     assert(ret == 0);
     return 0;
@@ -156,7 +157,7 @@ int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_
 int goto_next_dir(int img, int *inode_nr, 
                     struct ext2_super_block *s_block, const char* path) {
     char *next_path = strchr(path + 1, '/');
-    fprintf(stderr, "%s \n", next_path);
+    // fprintf(stderr, "%s \n", next_path);
     return get_inode_num_by_path(img, inode_nr, s_block, next_path);
 }
 int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
@@ -171,7 +172,6 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
     }
     //---------------------------
     char next_dir[PATH_SIZE];
-    // strcpy(next_dir, path);
     fill_path(next_dir, path, strlen(path));
     strtok(next_dir, "/");
     int next_dir_len = strlen(next_dir);
@@ -196,8 +196,7 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
                 }
                 break;
             }
-            continue;
-        }
+        } else
         if (i == EXT2_IND_BLOCK) {
             uint dir_buf[BLOCK_SIZE];
             memset(dir_buf, 0, BLOCK_SIZE);
@@ -205,13 +204,13 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
             if (ret < 0) {
                 return ret;
             }
-            if (ret == 0 && remain_path_len != 0) {                
-                return goto_next_dir(img, inode_nr, s_block, path);
-            } else if (ret == 0) {
+            if (ret == 0) {
+                if (remain_path_len != 0) {                
+                    return goto_next_dir(img, inode_nr, s_block, path);
+                }
                 break;
             }
-            continue;
-        }
+        }else 
         if (i == EXT2_DIND_BLOCK) {
             uint dind_buf[BLOCK_SIZE];
             memset(dind_buf, 0, BLOCK_SIZE);
@@ -219,13 +218,13 @@ int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_blo
             if (ret < 0) {
                 return ret;
             }
-            if (ret == 0 && remain_path_len != 0) {
-                return goto_next_dir(img, inode_nr, s_block, path);
-            } else if (ret == 0) {
+            if (ret == 0) {
+                if (remain_path_len != 0) {
+                    return goto_next_dir(img, inode_nr, s_block, path);
+                }
                 break;
             }
-            continue;
-        }
+        } else 
         return -ENOENT;
     }
     return 0;
