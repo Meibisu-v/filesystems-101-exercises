@@ -38,17 +38,21 @@ int dump_file(int img, const char *path, int out) {
 	while (1) {
 		s64 ret = ntfs_attr_pread(attribute, pos, BUFSIZ, buf);
 		if (ret < 0) {
+			free(buf);
 			return -errno;
 		}
 		if (ret == 0) {
+			// free(buf);
 			break;
 		}
 		int write_ret = write(out, buf, ret);
 		if (write_ret < 0) {
+			free(buf);
 			return -errno;
 		}
 		pos += ret;
 	}
+	free(buf);
 	ntfs_attr_close(attribute);
 	ntfs_inode_close(inode);
 	ntfs_umount(volume, TRUE);
