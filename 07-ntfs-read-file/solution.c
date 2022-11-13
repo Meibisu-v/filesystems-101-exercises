@@ -24,14 +24,16 @@ int dump_file(int img, const char *path, int out) {
 	}
 	ntfs_inode *inode = ntfs_pathname_to_inode(volume, NULL, path);
 	if (inode == NULL) {
+		int return_val = -errno;
 		ntfs_umount(volume, TRUE);		
-		return -errno;
+		return return_val;
 	}
 	ntfs_attr *attribute = ntfs_attr_open(inode, AT_DATA, NULL, 0);
 	if (!attribute) {
+		int return_val = -errno;
 		ntfs_inode_close(inode);
 		ntfs_umount(volume, TRUE);
-		return -errno;
+		return return_val;
 	}
 	s64 pos = 0;
 	char *buf = calloc(1, BUFSIZ);
