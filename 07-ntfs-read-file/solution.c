@@ -149,7 +149,7 @@ ntfs_inode *ntfs_pathname_to_inode(ntfs_volume *vol, ntfs_inode *parent,
 			goto close;
 		}
 //------------------------------------------------------
-		if ((ni->mrec->flags & MFT_RECORD_IS_DIRECTORY) && q) {
+		if (!(ni->mrec->flags & MFT_RECORD_IS_DIRECTORY) && q) {
 			err = ENOTDIR;
 			goto close;
 		}
