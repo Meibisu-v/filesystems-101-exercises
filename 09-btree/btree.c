@@ -324,6 +324,13 @@ void traverse(struct Node* node, int *it, int *idx) {
         traverse(node->children[node->n], it, idx);
     }
 }
+
+struct btree_iter {
+   int *values;
+   struct btree* tree;
+   int cnt;
+   int i;
+};
 struct btree_iter* btree_iter_start(struct btree *t)
 {
     struct btree_iter *it =(struct btree_iter*) calloc(1, sizeof(struct btree_iter));

@@ -33,12 +33,7 @@ bool btree_contains(struct btree *t, int x);
    Iterators will not be used concurrently with btree_insert()
    and btree_remove().
  */
-struct btree_iter {
-   int *values;
-   struct btree* tree;
-   int cnt;
-   int i;
-};
+struct btree_iter;
 
 /* Create an iterator over @t. */
 struct btree_iter* btree_iter_start(struct btree *t);
