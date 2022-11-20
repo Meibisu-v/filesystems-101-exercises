@@ -189,7 +189,7 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
             }
             --(node->n);
         } else {
-            if (node->children[idx]->n >= node->t) {
+            if (node->children[idx]->n >= T->t) {
                 struct Node* cur = node->children[idx];
                 while (!cur->leaf) {
                     cur = cur->children[cur->n];
@@ -197,7 +197,7 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
                 node->key[idx] = cur->key[cur->n - 1];
                 int val = node->key[idx];
                 btree_delete_key(T, node->children[idx], val);
-            } else if (node->children[idx + 1]->n >= node->t) {
+            } else if (node->children[idx + 1]->n >= T->t) {
                 struct Node* cur = node->children[idx + 1];
                 while (!cur->leaf) {
                     cur = cur->children[0];
