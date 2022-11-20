@@ -1,18 +1,31 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 /**
    Implement a B-tree that holds a set of integers. The tree must
    support insertion, deletion, and iteration over all values in it.
  */
-struct btree;
+struct Node {
+    bool leaf; 
+    uint t; //minimum degree
+    uint n; // current number of keys
+    int *key; // keys
+    struct Node **children; // child pointers
+};
+
+struct btree {
+    uint t; // minimum degree
+    struct Node *root; // pointer to root node
+};
 
 /* Allocate an empty btree with node sizes between L and 2*L. */
 struct btree* btree_alloc(unsigned int L);
 /* Release all memory allocated to @t. */
 void btree_free(struct btree *t);
 
+void print(struct Node *tree);
 /* Insert a value @x into @t. Inserting a value already present in @t
    must be a no-op. */
 void btree_insert(struct btree *t, int x);
@@ -30,7 +43,12 @@ bool btree_contains(struct btree *t, int x);
    Iterators will not be used concurrently with btree_insert()
    and btree_remove().
  */
-struct btree_iter;
+struct btree_iter {
+   int *values;
+   struct btree* tree;
+   int cnt;
+   int i;
+};
 
 /* Create an iterator over @t. */
 struct btree_iter* btree_iter_start(struct btree *t);
