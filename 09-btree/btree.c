@@ -18,7 +18,7 @@ struct btree {
 struct btree* btree_alloc(unsigned int L) {
     struct btree *tree = (struct btree*)calloc(1, sizeof(struct btree));
     tree->root = NULL;
-    tree->t = L;
+    tree->t = L + 1;
     return tree;
 }
 struct Node* node_alloc(bool leaf, uint L) {
@@ -38,17 +38,12 @@ void destroy_node(struct Node* tree) {
 }
 void node_free(struct Node* tree) {
     if (tree == NULL) return;
-    // printf("%d\n", 2 * tree->t);
     if (!tree->leaf) {
         for (long int i = 0; i < tree->n + 1; ++i) {
             node_free(tree->children[i]);
-            // tree->children[i] = NULL;
         }
     }
-    free(tree->children);       
-    // for(long int i = 0; i < tree->n;i++){
-    //         printf("del: %d ",tree->key[i]);
-    //     }
+    free(tree->children);      
     free(tree->key); 
     free(tree);
 }
@@ -112,7 +107,7 @@ void btree_insert_non_full(struct Node *x, int k) {
     if(x->leaf == 1) {
         while(i >= 0 && x->key[i] > k) {
             x->key[i+1] = x->key[i];
-            i--;
+            --i;
         }
         x->key[i+1] = k;
         x->n += 1;
@@ -134,14 +129,12 @@ void btree_insert(struct btree *T, int k) {
         T->root = node_alloc(true, T->t);
         T->root->key[0] = k;
         T->root->n = 1;
-        // T->root->children = NULL;
         return ;
     } 
     int t = T->t;    
     struct Node *r = T->root;    
     if((long int) r->n == (long int)2 * t - 1) {
         struct Node *s = node_alloc(0, t);
-        // T->root = s;
         s->children[0] = r;
         btree_split_child(s, 0);
         int i = 0;
