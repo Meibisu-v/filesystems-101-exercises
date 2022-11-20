@@ -224,63 +224,60 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
         }
     } else {
         if (node->leaf) return;
-        struct Node* child = node->children[idx];
-        if (node == NULL) {
-            return;
-        }
-        if (child->n == T->t - 1) { // If the current child node is not enough to borrow
-            struct Node* left = node->children[idx - 1];
-            struct Node* right = node->children[idx + 1];
-            if ((left && left->n >= T->t) || // Ask the brother node to borrow, then add it to the child node, and then delete it
-                (right && right->n >= T->t)) {
-                int richR = 0;
-                if (right) {
-                    richR = 1;
+        bool equal_cnt = false;
+        if (idx == node->n) equal_cnt = true;
+        // Ask the brother node to borrow, then add it to the child node, and then delete i
+        if (node->children[idx]->n < T->t) {
+            if (idx != 0 && node->children[idx - 1]->n >= T->t) {
+                // nodeBorrowFromPrev(node, idx);
+                struct Node *left = node->children[idx];
+                struct Node *right = node->children[idx - 1];
+                for (int i = left->n - 1; i >= 0; --i) {
+                    left->key[i +1] = left->key[i];
                 }
-                if (left && right) {
-                    richR = (right->n - left->n) ? 1 : 0;
-                }
-
-                if (right && right->n >= T->t && richR) {
-                    child->key[child->n] = node->key[idx];
-                    child->children[child->n + 1] = right->children[0];
-                    child->n += 1;
-
-                    node->key[idx] = right->key[0];
-                    for (long int i = 0; i < right->n - 1; i++) {
-                        right->key[i] = right->key[i + 1];
-                        right->children[i] = right->children[i + 1];
+                if (!left->leaf) {
+                    for (long int i = left->n; i >= 0; i--) {
+                        left->children[i + 1] = left->children[i];
                     }
-                    right->key[right->n - 1] = 0;
-                    right->children[right->n - 1] = right->children[right->n];
-                    right->children[right->n] = NULL;
-                    right->n--; 
-                } else {
-                    for (long int j = child->n; j > 0; j--) {
-                        child->key[j] = child->key[j - 1];
-                        child->children[j + 1] = child->children[j];
-                    }
-                    child->key[0] = left->key[left->n - 1];
-                    child->children[1] = child->children[0];
-                    child->children[0] = left->children[left->n];
-                    child->n++;
-
-                    left->children[left->n] = NULL;
-                    left->key[left->n - 1] = 0;
-                    left->n--;
                 }
-            } else if ((!left || left->n == T->t - 1) ||
-                       (!right || right->n == T->t - 1)) {
-                if (left && left->n == T->t - 1) {
-                    btree_merge_key(T, node, idx -1);
-                    child = left;
-                } else if (right && right->n == T->t - 1) {
+                left->key[0] = node->key[idx - 1];
+                if (!left->leaf) {
+                    left->children[0] = right->children[right->n];
+                }
+                node->key[idx - 1] = right->key[right->n - 1];
+                left->n += 1;
+                right->n -= 1;
+            } else if (idx != node->n && node->children[idx + 1]->n >= T->t) {
+                struct Node* left = node->children[idx];
+                struct Node* right = node->children[idx + 1];
+                left->key[(left->n)] = right->key[idx];
+                if (!(left->leaf)) {
+                    left->children[(left->n) + 1] = right->children[0];
+                }
+                node->key[idx] = right->key[0];
+                for (long int i = 1; i < right->n; ++i) {
+                    right->key[i - 1] = right->key[i];
+                }
+                if (!right->leaf) {
+                    for (long int i = 1; i <= right->n; ++i) {
+                        right->children[i - 1] = right->children[i];
+                    }
+                }
+                left->n += 1;
+                right->n -= 1;
+            } else {
+                if (idx != node->n) {
                     btree_merge_key(T, node, idx);
+                } else {
+                    btree_merge_key(T, node, idx - 1);
                 }
-
             }
         }
-        btree_delete_key(T, child, x);
+        if (equal_cnt && idx > node->n) {
+			btree_delete_key(T, node->children[idx - 1], x);
+		} else {
+			btree_delete_key(T, node->children[idx], x);
+		}
     }
 
 }
