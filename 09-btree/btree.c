@@ -57,9 +57,6 @@ void btree_free(struct btree *t) {
     node_free(t->root);
     free(t);
 }
-void print_tree(struct btree*t) {
-    print(t->root);
-}
 void print(struct Node *tree) {
     if (!tree) return;
     if(tree->leaf){
@@ -79,6 +76,9 @@ void print(struct Node *tree) {
         }
         print(tree->children[tree->n]);
     }
+}
+void print_tree(struct btree*t) {
+    print(t->root);
 }
 
 void btree_split_child(struct Node *x, int i) {    
