@@ -219,13 +219,13 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
             if (idx != 0 && node->children[idx - 1]->n >= T->t) {
                 struct Node *left = node->children[idx];
                 struct Node *right = node->children[idx - 1];
+                for (int i = left->n - 1; i >= 0; --i) {
+                    left->key[i +1] = left->key[i];
+                }
                 if (!left->leaf) {
                     for (long int i = left->n; i >= 0; i--) {
                         left->children[i + 1] = left->children[i];
                     }
-                }
-                for (int i = left->n - 1; i >= 0; --i) {
-                    left->key[i +1] = left->key[i];
                 }
                 left->key[0] = node->key[idx - 1];
                 if (!left->leaf) {
