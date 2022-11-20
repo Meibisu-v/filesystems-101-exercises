@@ -5,20 +5,20 @@
 #include <string.h>
 struct Node {
     bool leaf; 
-    uint t; //minimum degree
-    uint n; // current number of keys
+    int t; //minimum degree
+    int n; // current number of keys
     int *key; // keys
     struct Node **children; // child pointers
 };
 
 struct btree {
-    uint t; // minimum degree
+    int t; // minimum degree
     struct Node *root; // pointer to root node
 };
 struct btree* btree_alloc(unsigned int L) {
     struct btree *tree = (struct btree*)calloc(1, sizeof(struct btree));
     tree->root = NULL;
-    tree->t = L + 1;
+    tree->t = L;
     return tree;
 }
 struct Node* node_alloc(bool leaf, uint L) {
@@ -271,6 +271,16 @@ void btree_delete(struct btree *t, int x) {
     if (!btree_contains(t, x)) return;
     if (!t->root) return;
     btree_delete_key(t, t->root, x);
+    struct Node* root = t->root;
+    if (root->n == 0) {
+        if (root->leaf) {
+            root = NULL;
+        } else
+        if (root->n == 0 && !root->leaf) {
+            root = root->children[0];
+        }
+        destroy_node(root);
+    }
 }
 bool node_contains(struct Node* node, int x) {
     if (!node) return false;
