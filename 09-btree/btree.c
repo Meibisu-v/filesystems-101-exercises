@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-void btree_delete_key(struct btree* T, struct Node* node, int x) ;
 struct Node {
     bool leaf; 
     int t; //minimum degree
@@ -150,14 +148,14 @@ void btree_insert(struct btree *T, int k) {
 }
 
 
-void btree_merge_key(struct btree* T, struct Node* node, int index) {
+void btree_merge_key(struct btree* T, struct Node* node, int idx) {
     if (T->root == NULL || node == NULL) {
         return;
     }
-    struct Node* left = node->children[index];
-    struct Node* right = node->children[index + 1];
+    struct Node* left = node->children[idx];
+    struct Node* right = node->children[idx + 1];
 
-    left->key[T->t - 1] = node->key[index];
+    left->key[T->t - 1] = node->key[idx];
     for (long int i = 0; i < right->n; i++) {
         left->key[i + T->t] = right->key[i];
     }
@@ -166,24 +164,32 @@ void btree_merge_key(struct btree* T, struct Node* node, int index) {
             left->children[i + T->t] = right->children[i];
         }
     }
-    for (long int j = index + 1; j < node->n; j++) {
+    for (long int j = idx + 1; j < node->n; j++) {
         node->key[j - 1] = node->key[j];
     }
-    for (long int j = index + 2; j < node->n + 1; j++) {
+    for (long int j = idx + 2; j < node->n + 1; j++) {
         node->children[j - 1] = node->children[j];
     }
     left->n += right->n + 1;
     --(node->n);
     destroy_node(right);
 }
-void handle_del_root(struct btree* T, struct Node *node, int x, int idx) {
+void btree_delete_key(struct btree* T, struct Node* node, int x) {
+    if (node == NULL) {
+        return;
+    }
+    long int idx = 0;
+	while (idx < node->n && x > node->key[idx]) { // find the first value greater than key
+		idx++;
+	}
+    if (idx < node->n && x == node->key[idx]) {  // if the key is found
         if (node->leaf) { // The node is a leaf node
-        for (long int i = idx + 1; i < node->n; ++i) {
-            node->key[i - 1] = node->key[i];
-        }
-        --(node->n);
+            for (long int i = idx + 1; i < node->n; ++i) {
+                node->key[i - 1] = node->key[i];
+            }
+            --(node->n);
         } else {
-            if (node->children[idx]->n >= T->t) {
+            if (node->children[idx]->n >= node->t) {
                 struct Node* cur = node->children[idx];
                 while (!cur->leaf) {
                     cur = cur->children[cur->n];
@@ -191,7 +197,7 @@ void handle_del_root(struct btree* T, struct Node *node, int x, int idx) {
                 node->key[idx] = cur->key[cur->n - 1];
                 int val = node->key[idx];
                 btree_delete_key(T, node->children[idx], val);
-            } else if (node->children[idx + 1]->n >= T->t) {
+            } else if (node->children[idx + 1]->n >= node->t) {
                 struct Node* cur = node->children[idx + 1];
                 while (!cur->leaf) {
                     cur = cur->children[0];
@@ -204,17 +210,6 @@ void handle_del_root(struct btree* T, struct Node *node, int x, int idx) {
                 btree_delete_key(T, node->children[idx], x);
             }            
         }
-}
-void btree_delete_key(struct btree* T, struct Node* node, int x) {
-    if (node == NULL) {
-        return;
-    }
-    long int idx = 0;
-	while (idx < node->n && x > node->key[idx]) { // find the first value greater than key
-		idx++;
-	}
-    if (idx < node->n && x == node->key[idx]) {  // if the key is found
-        handle_del_root(T, node, x, idx);
     } else {
         if (node->leaf) return;
         bool equal_cnt = false;
