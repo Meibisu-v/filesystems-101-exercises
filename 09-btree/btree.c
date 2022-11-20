@@ -273,8 +273,8 @@ void btree_delete(struct btree *t, int x) {
     btree_delete_key(t, t->root, x);
     if (t->root->n == 0) {
         struct Node*root = t->root;
-        if(root->leaf) root = NULL;
-        else root = root->children[0];
+        if(t->root->leaf) t->root = NULL;
+        else t->root = t->root->children[0];
         destroy_node(root);
     }
 }
