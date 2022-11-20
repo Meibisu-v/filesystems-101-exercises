@@ -18,7 +18,7 @@ struct btree {
 struct btree* btree_alloc(unsigned int L) {
     struct btree *tree = (struct btree*)calloc(1, sizeof(struct btree));
     tree->root = NULL;
-    tree->t = L;
+    tree->t = L + 2;
     return tree;
 }
 struct Node* node_alloc(bool leaf, uint L) {
@@ -26,8 +26,8 @@ struct Node* node_alloc(bool leaf, uint L) {
     root->leaf = leaf;
     root->t = L;
     root->n = 0;
-    root->key = (int*)calloc((2 * L - 1), sizeof(int));
-    root->children = (struct Node**)calloc((2 * L), sizeof(struct Node*));
+    root->key = (int*)calloc((2 * L + 1), sizeof(int));
+    root->children = (struct Node**)calloc((2 * L + 1), sizeof(struct Node*));
     return root;
 }
 
@@ -149,9 +149,9 @@ void btree_insert(struct btree *T, int k) {
 
 
 void btree_merge_key(struct btree* T, struct Node* node, int idx) {
-    // if (T->root == NULL || node == NULL) {
-    //     return;
-    // }
+    if (T->root == NULL || node == NULL) {
+        return;
+    }
     struct Node* left = node->children[idx];
     struct Node* right = node->children[idx + 1];
 
@@ -160,14 +160,14 @@ void btree_merge_key(struct btree* T, struct Node* node, int idx) {
         left->key[i + T->t] = right->key[i];
     }
     if (!left->leaf) {
-        for (long int i = 0; i <= right->n; i++) {
+        for (long int i = 0; i < right->n + 1; i++) {
             left->children[i + T->t] = right->children[i];
         }
     }
     for (long int j = idx + 1; j < node->n; j++) {
         node->key[j - 1] = node->key[j];
     }
-    for (long int j = idx + 2; j <= node->n; j++) {
+    for (long int j = idx + 2; j < node->n + 1; j++) {
         node->children[j - 1] = node->children[j];
     }
     left->n += right->n + 1;
