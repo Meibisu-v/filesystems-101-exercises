@@ -7,18 +7,8 @@
    Implement a B-tree that holds a set of integers. The tree must
    support insertion, deletion, and iteration over all values in it.
  */
-struct Node {
-    bool leaf; 
-    uint t; //minimum degree
-    uint n; // current number of keys
-    int *key; // keys
-    struct Node **children; // child pointers
-};
-
-struct btree {
-    uint t; // minimum degree
-    struct Node *root; // pointer to root node
-};
+struct btree;
+struct Node;
 
 /* Allocate an empty btree with node sizes between L and 2*L. */
 struct btree* btree_alloc(unsigned int L);

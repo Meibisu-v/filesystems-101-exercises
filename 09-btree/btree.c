@@ -3,9 +3,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-struct Node;
-struct btree;
+struct Node {
+    bool leaf; 
+    uint t; //minimum degree
+    uint n; // current number of keys
+    int *key; // keys
+    struct Node **children; // child pointers
+};
 
+struct btree {
+    uint t; // minimum degree
+    struct Node *root; // pointer to root node
+};
 struct btree* btree_alloc(unsigned int L) {
     struct btree *tree = (struct btree*)calloc(1, sizeof(struct btree));
     tree->root = NULL;
