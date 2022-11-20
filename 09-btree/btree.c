@@ -18,7 +18,7 @@ struct btree {
 struct btree* btree_alloc(unsigned int L) {
     struct btree *tree = (struct btree*)calloc(1, sizeof(struct btree));
     tree->root = NULL;
-    tree->t = L;
+    tree->t = L+2;
     return tree;
 }
 struct Node* node_alloc(bool leaf, uint L) {
@@ -26,8 +26,8 @@ struct Node* node_alloc(bool leaf, uint L) {
     root->leaf = leaf;
     root->t = L;
     root->n = 0;
-    root->key = (int*)calloc((2 * L - 1), sizeof(int));
-    root->children = (struct Node**)calloc((2 * L), sizeof(struct Node*));
+    root->key = (int*)calloc((2 * L + 1), sizeof(int));
+    root->children = (struct Node**)calloc((2 * L + 1), sizeof(struct Node*));
     return root;
 }
 
