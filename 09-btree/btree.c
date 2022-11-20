@@ -163,30 +163,23 @@ void btree_merge_key(struct btree* T, struct Node* node, int idx) {
     struct Node* right = node->children[idx + 1];
 
     left->key[T->t - 1] = node->key[idx];
-    for (long int i = 0; i < T->t - 1; i++) {
+    for (long int i = 0; i < right->n; i++) {
         left->key[i + T->t] = right->key[i];
     }
     if (!left->leaf) {
-        for (long int i = 0; i < T->t; i++) {
+        for (long int i = 0; i <= right->n; i++) {
             left->children[i + T->t] = right->children[i];
         }
     }
-    left->n += T->t;
-
-    destroy_node(right);
-
     for (long int j = idx + 1; j < node->n; j++) {
         node->key[j - 1] = node->key[j];
-        node->children[j] = node->children[j + 1];
     }
-    node->key[node->n - 1] = 0;
-    node->children[node->n] = NULL;
-    node->n--;
-
-    if (!node->n) {
-        T->root = left;
-        destroy_node(node);
+    for (long int j = idx + 2; j <= node->n; j++) {
+        node->children[j - 1] = node->children[j];
     }
+    left->n += right->n + 1;
+    --(node->n);
+    destroy_node(right);
 }
 void btree_delete_key(struct btree* T, struct Node* node, int x) {
     if (node == NULL) {
