@@ -57,6 +57,9 @@ void btree_free(struct btree *t) {
     node_free(t->root);
     free(t);
 }
+void print_tree(struct btree*t) {
+    print(t->root);
+}
 void print(struct Node *tree) {
     if (!tree) return;
     if(tree->leaf){
@@ -151,11 +154,11 @@ void btree_insert(struct btree *T, int k) {
     }
 }
 
+
 void btree_merge_key(struct btree* T, struct Node* node, int idx) {
     if (T->root == NULL || node == NULL) {
         return;
     }
-
     struct Node* left = node->children[idx];
     struct Node* right = node->children[idx + 1];
 
@@ -185,39 +188,39 @@ void btree_merge_key(struct btree* T, struct Node* node, int idx) {
         destroy_node(node);
     }
 }
-
-void btree_delete_key(struct btree* T, struct Node* node, int key)
-{
+void btree_delete_key(struct btree* T, struct Node* node, int x) {
     if (node == NULL) {
         return;
     }
     long int idx = 0;
-    while (idx < node->n && key > node->key[idx]) { // find the first value greater than key
-        idx++;
-    }
-    if (idx < node->n && key == node->key[idx]) {    // if the key is found
-        if (node->leaf) {  // The node is a leaf node
-            for (long int i = idx; i < node->n - 1; i++) {
-                node->key[i] = node->key[i + 1];
+	while (idx < node->n && x > node->key[idx]) { // find the first value greater than key
+		idx++;
+	}
+    if (idx < node->n && x == node->key[idx]) {  // if the key is found
+        if (node->leaf) { // The node is a leaf node
+            for (long int i = idx + 1; i < node->n; ++i) {
+                node->key[i - 1] = node->key[i];
             }
-            node->key[node->n - 1] = 0;
-            node->n--;
-            if (node->n == 0) {  // If it is the root node, delete it directly
-                destroy_node(node);
-                T->root = 0;
-            }
-            return;
+            --(node->n);
         } else {
-            if (node->children[idx]->n >= T->t) { // If the subtree can borrow one, ask the subtree to borrow
-                node->key[idx] = node->key[node->n - 1];
-                btree_delete_key(T, node->children[idx], node->key[node->n - 1]);
-            } else if (node->children[idx + 1]->n >= T->t) { // If not, ask the next subtree to borrow
-                node->key[idx] = node->children[idx + 1]->key[0];
-                btree_delete_key(T, node->children[idx + 1], node->children[idx + 1]->key[0]);
-            } else { 
+            if (node->children[idx]->n >= node->t) {
+                struct Node* cur = node->children[idx];
+                while (cur->leaf == 0) {
+                    cur = cur->children[cur->n];
+                }
+                node->key[idx] = cur->key[cur->n - 1];
+                btree_delete_key(T, node->children[idx], node->key[idx]);
+            } else if (node->children[idx + 1]->n >= node->t) {
+                struct Node* cur = node->children[idx + 1];
+                while (cur->leaf == 0) {
+                    cur = cur->children[0];
+                }
+                node->key[idx] = cur->key[0];
+                btree_delete_key(T, node->children[idx + 1], node->key[idx]);
+            } else {
                 btree_merge_key(T, node, idx);
-                btree_delete_key(T, node->children[idx], key);
-            }
+                btree_delete_key(T, node->children[idx], x);
+            }            
         }
     } else {
         struct Node* child = node->children[idx];
@@ -276,18 +279,21 @@ void btree_delete_key(struct btree* T, struct Node* node, int key)
 
             }
         }
-        btree_delete_key(T, child, key);
+        btree_delete_key(T, child, x);
     }
+
 }
+
 void btree_delete(struct btree *t, int x) {
     if (!btree_contains(t, x)) return;
     if (!t->root) return;
     btree_delete_key(t, t->root, x);
 }
 bool node_contains(struct Node* node, int x) {
+    if (!node) return false;
     long int i = 0;
     while (i < node->n && x > node->key[i]) ++i;
-    if (node->key[i] == x) return true;
+    if (i < node->n && node->key[i] == x) return true;
     if (node->leaf) return false;
     return node_contains(node->children[i], x);
 }

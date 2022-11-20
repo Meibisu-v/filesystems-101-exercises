@@ -14,7 +14,7 @@ struct Node;
 struct btree* btree_alloc(unsigned int L);
 /* Release all memory allocated to @t. */
 void btree_free(struct btree *t);
-
+void print_tree(struct btree*tree);
 void print(struct Node *tree);
 /* Insert a value @x into @t. Inserting a value already present in @t
    must be a no-op. */
