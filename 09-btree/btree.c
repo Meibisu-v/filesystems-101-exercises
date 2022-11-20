@@ -198,14 +198,14 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
         } else {
             if (node->children[idx]->n >= node->t) {
                 struct Node* cur = node->children[idx];
-                while (cur->leaf == 0) {
+                while (!cur->leaf) {
                     cur = cur->children[cur->n];
                 }
                 node->key[idx] = cur->key[cur->n - 1];
                 btree_delete_key(T, node->children[idx], node->key[idx]);
             } else if (node->children[idx + 1]->n >= node->t) {
                 struct Node* cur = node->children[idx + 1];
-                while (cur->leaf == 0) {
+                while (!cur->leaf) {
                     cur = cur->children[0];
                 }
                 node->key[idx] = cur->key[0];
@@ -222,24 +222,23 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
         // Ask the brother node to borrow, then add it to the child node, and then delete i
         if (node->children[idx]->n < T->t) {
             if (idx != 0 && node->children[idx - 1]->n >= T->t) {
-                // nodeBorrowFromPrev(node, idx);
                 struct Node *left = node->children[idx];
                 struct Node *right = node->children[idx - 1];
-                for (int i = left->n - 1; i >= 0; --i) {
-                    left->key[i +1] = left->key[i];
-                }
                 if (!left->leaf) {
                     for (long int i = left->n; i >= 0; i--) {
                         left->children[i + 1] = left->children[i];
                     }
+                }
+                for (int i = left->n - 1; i >= 0; --i) {
+                    left->key[i +1] = left->key[i];
                 }
                 left->key[0] = node->key[idx - 1];
                 if (!left->leaf) {
                     left->children[0] = right->children[right->n];
                 }
                 node->key[idx - 1] = right->key[right->n - 1];
-                left->n += 1;
-                right->n -= 1;
+                ++ left->n;
+                --right->n;
             } else if (idx != node->n && node->children[idx + 1]->n >= T->t) {
                 struct Node* left = node->children[idx];
                 struct Node* right = node->children[idx + 1];
@@ -256,8 +255,8 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
                         right->children[i - 1] = right->children[i];
                     }
                 }
-                left->n += 1;
-                right->n -= 1;
+                ++left->n;
+                --right->n;
             } else {
                 if (idx != node->n) {
                     btree_merge_key(T, node, idx);
