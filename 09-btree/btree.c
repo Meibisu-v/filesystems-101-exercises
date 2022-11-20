@@ -223,6 +223,7 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
             }            
         }
     } else {
+        if (node->leaf) return;
         struct Node* child = node->children[idx];
         if (node == NULL) {
             return;
