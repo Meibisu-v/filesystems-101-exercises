@@ -149,9 +149,9 @@ void btree_insert(struct btree *T, int k) {
 
 
 void btree_merge_key(struct btree* T, struct Node* node, int idx) {
-    if (T->root == NULL || node == NULL) {
-        return;
-    }
+    // if (T->root == NULL || node == NULL) {
+    //     return;
+    // }
     struct Node* left = node->children[idx];
     struct Node* right = node->children[idx + 1];
 
@@ -237,16 +237,16 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
             } else if (idx != node->n && node->children[idx + 1]->n >= T->t) {
                 struct Node* left = node->children[idx];
                 struct Node* right = node->children[idx + 1];
-                left->key[(left->n)] = right->key[idx];
-                if (!(left->leaf)) {
-                    left->children[(left->n) + 1] = right->children[0];
+                left->key[left->n] = right->key[idx];
+                if (!left->leaf) {
+                    left->children[left->n + 1] = right->children[0];
                 }
                 node->key[idx] = right->key[0];
                 for (long int i = 1; i < right->n; ++i) {
                     right->key[i - 1] = right->key[i];
                 }
                 if (!right->leaf) {
-                    for (long int i = 1; i <= right->n; ++i) {
+                    for (long int i = 1; i < right->n + 1; ++i) {
                         right->children[i - 1] = right->children[i];
                     }
                 }
