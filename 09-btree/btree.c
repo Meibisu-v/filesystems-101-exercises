@@ -216,9 +216,9 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
         // bool equal_cnt = false;
         // if (idx == node->n) equal_cnt = true;
         // Ask the brother node to borrow, then add it to the child node, and then delete i
-        if (node->children[idx]->n == node->t -1) {
+        if (node->children[idx]->n == T->t -1) {
             if ((idx > 0 && node->children[idx - 1]->n >= T->t) ||
-                (idx < node->n && node->children[idx + 1]->n >= T->t)) {
+                    (idx < node->n && node->children[idx + 1]->n >= T->t)) {
                 if (idx > 0 && node->children[idx - 1]->n >= T->t) {
                     struct Node *left = node->children[idx];
                     struct Node *right = node->children[idx - 1];
@@ -256,14 +256,7 @@ void btree_delete_key(struct btree* T, struct Node* node, int x) {
                         }
                     }
                     --node->children[idx + 1]->n;
-                } 
-                // else {
-                //     if (idx != node->n) {
-                //         btree_merge_key(T, node, idx);
-                //     } else {
-                //         btree_merge_key(T, node, idx - 1);
-                //     }
-                // }
+                }
             } else {
                 if (idx > 0) {
                     btree_merge_key(T, node, idx - 1);
