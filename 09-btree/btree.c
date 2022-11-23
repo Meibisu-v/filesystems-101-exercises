@@ -261,9 +261,12 @@ void btree_delete_key(struct Node* node, int x) {
                 }
             } else {
                 if (idx > 0) {
-                    merge_node_left(node, &idx);
+                    // merge_node_left(node, &idx);
+                    btree_merge_key(node, idx - 1);
+                    --idx;
                 } else {
-                    merge_node_right(node, &idx);
+                    // merge_node_right(node, &idx);
+                    btree_merge_key(node, idx);
                 }
             }
         }
