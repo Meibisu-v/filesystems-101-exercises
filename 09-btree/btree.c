@@ -339,10 +339,10 @@ void btree_delete(struct btree *t, int x) {
 }
 bool node_contains(struct Node* node, int x) {
     if (!node) return false;
-    if (node->leaf) return false;
     long int i = 0;
     while (i < node->n && x > node->key[i]) ++i;
     if (i < node->n && node->key[i] == x) return true;
+    if (node->leaf) return false;
     return node_contains(node->children[i], x);
 }
 
