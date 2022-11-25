@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "Makefile": "makefile",
+        "errno.h": "c",
+        "solution.h": "c",
+        "stdio.h": "c"
+    }
+}

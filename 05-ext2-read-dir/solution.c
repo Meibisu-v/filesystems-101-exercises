@@ -123,3 +123,8 @@ int handle_double_ind_block(int img, uint i_block, uint block_size) {
     return 0;
 }
 
+#include <stdio.h>
+void report_file(int inode_nr, char type, const char *name)
+{
+	printf("%d %c %s\n", inode_nr, type, name);
+}

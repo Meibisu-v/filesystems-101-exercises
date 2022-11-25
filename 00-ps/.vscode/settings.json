@@ -1,0 +1,9 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/elizaveta/filesystems-101-exercises/00-ps",
+            "binaryPath": "/home/elizaveta/filesystems-101-exercises/00-ps/a.out",
+            "binaryArgs": []
+        }
+    ]
+}

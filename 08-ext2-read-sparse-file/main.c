@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 	(void) argc;
 	(void) argv;
 
-	int img = open("img", O_RDONLY);
+	int img = open("../rootfs.ext2", O_RDONLY);
 	int out = open("out", O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
 
 	if (img < 0)

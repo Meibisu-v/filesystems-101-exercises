@@ -1,0 +1,3 @@
+curl -s -X POST http://185.106.102.104:9091/submit/Meibisu-v/00-ps
+
+curl -s -X GET http://185.106.102.104:9091/results/Meibisu-v/00-ps/last | jq '.tests[0].vg' -r
