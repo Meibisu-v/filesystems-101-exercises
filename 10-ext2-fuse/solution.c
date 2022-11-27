@@ -72,7 +72,7 @@ int read_direct_blocks(int img, int block_size, int i_block, char*buffer, off_t 
             *size -= read;
             *written += read;
         } else {
-            off -= block_size;
+            *off -= block_size;
         }
     } else {
         size_t read = (*size < block_size) ? *size : block_size;
