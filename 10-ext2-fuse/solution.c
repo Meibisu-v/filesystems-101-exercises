@@ -12,23 +12,22 @@
 uint BLOCK_SIZE = 0;
 static int ext2_img = 0;
 //========================================================
-
-//==========================================================
 static int read_s_block(struct ext2_super_block *s_block);
-int dump_dir(int img, int inode_nr, char* data, struct ext2_super_block *s_block,
-                fuse_fill_dir_t fill);
-int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
-                            const char *path);
-static int fs_read(const char *path, char *buf, size_t size, 
-					off_t off, struct fuse_file_info *ffi);
+
+int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
+int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
+int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
+
+int dump_dir(int img, int inode_nr, char* data, struct ext2_super_block *s_block, fuse_fill_dir_t fill);
+int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, const char *path);
+static int fs_read(const char *path, char *buf, size_t size, off_t off, struct fuse_file_info *ffi);
 static int fs_getattr(const char *path, struct stat *st, struct fuse_file_info *ffi);
 
 static int fs_open(const char *path, struct fuse_file_info *ffi);
-static int fs_readdir(const char *path, void *data, fuse_fill_dir_t filler, off_t off, 
-						struct fuse_file_info *ffi,  enum fuse_readdir_flags frf);
+static int fs_readdir(const char *path, void *data, fuse_fill_dir_t filler, off_t off, struct fuse_file_info *ffi,  enum fuse_readdir_flags frf);
+int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_block,struct ext2_inode *inode);
+//========================================================
 
-int handle_inode(int img, const int *inode_nr, const struct ext2_super_block *s_block,
-                    struct ext2_inode *inode);
 static int fs_write(const char *path, const char *buf, size_t size, off_t off, struct fuse_file_info * ffi)
 {
     (void)buf;
@@ -119,15 +118,15 @@ int read_double_ind_block(int img, int block_size, int i_block, char*buffer, off
     free(double_ind_block_buffer);
     return 0;
 }
-int dump_file(int img, char* out, int block_size, struct ext2_inode *inode, 
-                    off_t offset, size_t size) {
+int dump_file(int img, char* out, int block_size, struct ext2_inode *inode, off_t offset, size_t size) {
     //copy
     char *buffer = malloc(block_size * sizeof(char));
     off_t written = 0;
-    int ret = 0;
     off_t off = offset;
     off_t size_ = size;
+    int ret = 0;
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
+        if (inode->i_block[i] == 0) break;
         if (i < EXT2_NDIR_BLOCKS) {
             ret = read_direct_blocks(img, block_size, inode->i_block[i], buffer, &written, &size_, 
                                     &off, out);
@@ -149,8 +148,9 @@ int dump_file(int img, char* out, int block_size, struct ext2_inode *inode,
         }
     }  
     free(buffer);
-    // printf("string = %s", out);
-    return size;
+    // printf("string = %s\n", out);
+    // printf("size read = %ld\n", written);
+    return size - size_;
 }
 //-----------------------------------------------------------------------------------
 static int fs_read(const char *path, char *buf, size_t size, 
@@ -172,8 +172,8 @@ static int fs_read(const char *path, char *buf, size_t size,
     struct ext2_inode inode={};
     ret = handle_inode(ext2_img, &inode_nr, &super_block, &inode);
     assert(ret >= 0);
-    return dump_file(ext2_img, buf, BLOCK_SIZE, &inode, off, size);
-    // return size;
+    ret =  dump_file(ext2_img, buf, BLOCK_SIZE, &inode, off, size);
+    return ret;
 }
 
 static int read_s_block(struct ext2_super_block *s_block) {
@@ -385,19 +385,22 @@ static int fs_getattr(const char *path, struct stat *st, struct fuse_file_info *
     ret = handle_inode(ext2_img, &inode_nr, &s_block, &inode);
     assert(ret >= 0);
     if (ret < 0) return ret;
-    struct fuse_context *cont = fuse_get_context();
-    st->st_ino = inode_nr;
-    st->st_uid = cont->uid;
-    st->st_blocks = inode.i_blocks;
-    st->st_mode = inode.i_mode;
+
+	st->st_ino = inode_nr;
+	st->st_mode = inode.i_mode;
+	st->st_nlink = inode.i_links_count;
+	st->st_uid = inode.i_uid;
+	st->st_gid = inode.i_gid;
+	st->st_size = inode.i_size;
+	st->st_blksize = BLOCK_SIZE;
+	st->st_blocks = inode.i_blocks;
+	st->st_atime = inode.i_atime;
+	st->st_mtime = inode.i_mtime;
+	st->st_ctime = inode.i_ctime;
     return 0;	
 }
 #define BLOCK_INIT 1024
 //---------------ext2-read-dir-----------------------------------------------------------
-int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
-int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
-int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
-
 int dump_dir(int img, int inode_nr, char* fill_buf, struct ext2_super_block *s_block, 
                 fuse_fill_dir_t fill) {
     int BLOCK_SIZE = BLOCK_INIT << s_block->s_log_block_size;
