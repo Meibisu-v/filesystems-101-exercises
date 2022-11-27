@@ -15,13 +15,6 @@ static int ext2_img = 0;
 
 //==========================================================
 static int read_s_block(struct ext2_super_block *s_block);
-// int read_direct_blocks(int img, char* out, uint i_block, uint block_size, 
-//                          long *offset);
-// int read_ind_block(int img, char* out, uint i_block, uint block_size, 
-//                      long *offset);
-// int read_double_ind_block(int img, char* out, uint i_block, uint block_size, 
-//                             long *offset);
-// int dump_file(int img, int inode_nr, char* out, char*file_content);
 int dump_dir(int img, int inode_nr, char* data, struct ext2_super_block *s_block,
                 fuse_fill_dir_t fill);
 int get_inode_num_by_path(int img, int *inode_nr, struct ext2_super_block *s_block, 
@@ -62,7 +55,7 @@ static void* fs_init(struct fuse_conn_info* conn, struct fuse_config* config)
 }
 
 //----------ext2-read-file-----------------------------------------------------------
-
+//-----------fs_read-----------------------------------------------------------------
 #define BLOCK_INIT 1024
 
 int read_direct_blocks(int img, int block_size, int i_block, char*buffer, off_t *written, 
@@ -400,12 +393,12 @@ static int fs_getattr(const char *path, struct stat *st, struct fuse_file_info *
     return 0;	
 }
 #define BLOCK_INIT 1024
-//-----------------------------------------------------------------------------
-int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data);
-int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data);
-int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data);
+//---------------ext2-read-dir-----------------------------------------------------------
+int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
+int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
+int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size);
 
-int dump_dir(int img, int inode_nr, char* data, struct ext2_super_block *s_block, 
+int dump_dir(int img, int inode_nr, char* fill_buf, struct ext2_super_block *s_block, 
                 fuse_fill_dir_t fill) {
     int BLOCK_SIZE = BLOCK_INIT << s_block->s_log_block_size;
     //
@@ -425,22 +418,23 @@ int dump_dir(int img, int inode_nr, char* data, struct ext2_super_block *s_block
         return -errno;
     }
     //copy
-    // long size = inode.i_size;
+    long size = inode.i_size;
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
+        if (size <= 0) break;
         if (i < EXT2_NDIR_BLOCKS) {
-            int ret = handle_direct_blocks(img, inode.i_block[i], BLOCK_SIZE, fill, data);
+            int ret = handle_direct_blocks(img, inode.i_block[i], BLOCK_SIZE, fill, fill_buf, &size);
             assert(ret >= 0);
             if (ret < 0) return ret;
         }
         if (i == EXT2_IND_BLOCK) {
-            ret = handle_ind_block(img, inode.i_block[i], BLOCK_SIZE, fill, data);
+            ret = handle_ind_block(img, inode.i_block[i], BLOCK_SIZE, fill, fill_buf, &size);
             assert(ret >=0);
             if (ret < 0) {
                 return ret;
             }
         }
         if (i == EXT2_DIND_BLOCK) {
-            ret = handle_double_ind_block(img, inode.i_block[i], BLOCK_SIZE, fill, data);
+            ret = handle_double_ind_block(img, inode.i_block[i], BLOCK_SIZE, fill, fill_buf, &size);
             assert(ret >= 0);
             if (ret < 0) {
                 return ret;
@@ -450,51 +444,41 @@ int dump_dir(int img, int inode_nr, char* data, struct ext2_super_block *s_block
     printf("end dump dir\n");
     return 0;
 }
-
-char file_type_ch(unsigned char file_type){
-    if (file_type == EXT2_FT_REG_FILE) {
-        return 'f';
-    }
-    if (file_type == EXT2_FT_DIR) {
-        return 'd';
-    }
-    return -1;
-}
 void copy_name(const char* from, char* to, int len) {
     for (int i = 0; i < len; ++i) {
         to[i] = from[i];
     }
     to[len] = '\0';
 }
-int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data) {
-    struct ext2_dir_entry_2 dir_entry;
-    int next_dir_pos = i_block * block_size;
-    int remains = block_size;
-    while (1) {
-        if (dir_entry.inode == 0) break;
-        if (remains <= 0) break;
-        printf("pos = %d, remains = %d\n", next_dir_pos, remains);
-        int ret = pread(img, &dir_entry, sizeof(dir_entry), next_dir_pos);
-        assert(ret >= 0);
-        if (ret < 0) {
-            return -errno;
-        }        
-        char name[dir_entry.name_len + 1];
-        copy_name(dir_entry.name, name, dir_entry.name_len);
-        next_dir_pos += dir_entry.rec_len;
-        remains -= dir_entry.rec_len;
-        // report_file(dir_entry.inode, file_type_ch(dir_entry.file_type), name);
+int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size) {
+    char *buffer = malloc(block_size * sizeof(char));
+    struct ext2_dir_entry_2 *dir_entry;
+    int ret = pread(img, buffer, block_size, i_block * block_size);
+    assert(ret >= 0);
+    if (ret < 0) return ret;
+    long int cur_pos = 0;
+    while (cur_pos < *size && cur_pos < block_size) {
+        dir_entry = (struct ext2_dir_entry_2*)(buffer + cur_pos);
+        char name[dir_entry->name_len + 1];
+        copy_name(dir_entry->name, name, dir_entry->name_len);
+
         struct stat stat = {};
-        stat.st_ino = dir_entry.inode;        
-        if(dir_entry.file_type == EXT2_FT_REG_FILE)
+        stat.st_ino = dir_entry->inode;        
+        if(dir_entry->file_type == EXT2_FT_REG_FILE)
             stat.st_mode = S_IFREG | S_IRUSR | S_IRGRP | S_IROTH;
-        else if(dir_entry.file_type == EXT2_FT_DIR)
+        else if(dir_entry->file_type == EXT2_FT_DIR)
             stat.st_mode = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH;
         fill(data, name, &stat, 0, 0);
+        cur_pos += dir_entry->rec_len;
+    }
+    if (cur_pos > *size) {
+        *size = 0;
+    } else {
+        *size -= block_size;
     }
     return 0;
 }
-int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data) {
+int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size) {
     char *buffer_indir = malloc(sizeof(char) * block_size);
     int ret = pread(img, buffer_indir, block_size, i_block * block_size);
     if (ret < 0) {
@@ -502,7 +486,7 @@ int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fil
     }
     uint *buffer_int = (uint*) buffer_indir;
     for (uint i = 0; i < block_size / sizeof(uint); ++i) {
-        ret = handle_direct_blocks(img, buffer_int[i], block_size, fill, data);
+        ret = handle_direct_blocks(img, buffer_int[i], block_size, fill, data, size);
         assert(ret >= 0);
         if (ret < 0) {
             return ret;
@@ -511,7 +495,7 @@ int handle_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fil
     free(buffer_indir);
     return 0;
 }
-int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data) {
+int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_dir_t fill, char*data, long *size) {
     char* double_ind_block_buffer = malloc(sizeof(char) * block_size);
     int ret = pread(img, double_ind_block_buffer, block_size, i_block * block_size);
     if (ret < 0) {
@@ -519,7 +503,7 @@ int handle_double_ind_block(int img, uint i_block, uint block_size, fuse_fill_di
     }
     uint *buffer_int = (uint*) double_ind_block_buffer;
     for (uint i = 0; i < block_size / 4; ++ i) {
-        ret = handle_ind_block(img, buffer_int[i], block_size, fill, data);
+        ret = handle_ind_block(img, buffer_int[i], block_size, fill, data, size);
         if (ret < 0) return ret;
     }
     free(double_ind_block_buffer);
