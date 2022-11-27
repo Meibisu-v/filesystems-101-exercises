@@ -57,9 +57,9 @@ static void* fs_init(struct fuse_conn_info* conn, struct fuse_config* config)
 //-----------fs_read-----------------------------------------------------------------
 #define BLOCK_INIT 1024
 
-int read_direct_blocks(int img, int block_size, int i_block, char*buffer, off_t *written, 
+int read_direct_blocks(int img, int block_size, int i_block, off_t *written, 
                         off_t *size, off_t *off, char*out) {
-    // char buffer[block_size];
+    char buffer[block_size];
     int ret = pread(img, buffer, block_size, i_block * block_size);
     if (ret < 0) {
         return -errno;
@@ -82,45 +82,41 @@ int read_direct_blocks(int img, int block_size, int i_block, char*buffer, off_t 
     }
     return 0;
 }
-int read_ind_block(int img, int block_size, int i_block, char*buffer, off_t *written, 
+int read_ind_block(int img, int block_size, int i_block, off_t *written, 
                         off_t *size, off_t *off, char*out) {
+    char buffer[block_size];
     int ret = pread(img, buffer, block_size, i_block * block_size);
     if (ret < 0) {
         return -errno;
     }
     int *buffer_int = (int*) buffer;
-    char *buffer_indir = malloc(block_size * sizeof(char));
     for (long int i = 0; i < block_size / 4; ++i) {
         if (buffer_int[i] == 0) break;
-        ret = read_direct_blocks(img, block_size, buffer_int[i], buffer_indir, written,
+        ret = read_direct_blocks(img, block_size, buffer_int[i], written,
                                     size, off, out);
         if (ret < 0) {
             return ret;
         }
     }
-    free(buffer_indir);
     return 0;
 }
-int read_double_ind_block(int img, int block_size, int i_block, char*buffer, off_t *written, 
-                        off_t *size, off_t *off, char*out)  {
+int read_double_ind_block(int img, int block_size, int i_block, off_t *written, 
+                        off_t *size, off_t *off, char*out)  {                            
+    char buffer[block_size];
     int ret = pread(img, buffer, block_size, i_block * block_size);
     if (ret < 0) {
         return -errno;
     }
     int *buffer_int = (int*) buffer;
-    char *double_ind_block_buffer = malloc(sizeof(char) * block_size);
     for (long int i = 0; i < block_size / 4; ++ i) {
         if (buffer_int[i] == 0) break;
-        ret = read_ind_block(img, block_size, buffer_int[i], double_ind_block_buffer, written, 
-                                size, off, out);
+        ret = read_ind_block(img, block_size, buffer_int[i], written, size, off, out);
         if (ret < 0) return ret;
     }
-    free(double_ind_block_buffer);
     return 0;
 }
 int dump_file(int img, char* out, int block_size, struct ext2_inode *inode, off_t offset, size_t size) {
     //copy
-    char *buffer = malloc(block_size * sizeof(char));
     off_t written = 0;
     off_t off = offset;
     off_t size_ = size;
@@ -128,33 +124,29 @@ int dump_file(int img, char* out, int block_size, struct ext2_inode *inode, off_
     for (size_t i = 0; i < EXT2_N_BLOCKS; ++i) {
         if (inode->i_block[i] == 0) break;
         if (i < EXT2_NDIR_BLOCKS) {
-            ret = read_direct_blocks(img, block_size, inode->i_block[i], buffer, &written, &size_, 
+            ret = read_direct_blocks(img, block_size, inode->i_block[i], &written, &size_, 
                                     &off, out);
             if (ret < 0) return ret;
         }
         if (i == EXT2_IND_BLOCK) {
-            ret = read_ind_block(img, block_size, inode->i_block[i], buffer, &written, &size_, 
+            ret = read_ind_block(img, block_size, inode->i_block[i], &written, &size_, 
                                     &off, out);
             if (ret < 0) {
                 return ret;
             }
         }
         if (i == EXT2_DIND_BLOCK) {
-            ret = read_double_ind_block(img, block_size, inode->i_block[i], buffer, &written, &size_, 
+            ret = read_double_ind_block(img, block_size, inode->i_block[i], &written, &size_, 
                                     &off, out);
             if (ret < 0) {
                 return ret;
             }  
         }
     }  
-    free(buffer);
-    // printf("string = %s\n", out);
-    // printf("size read = %ld\n", written);
-    return size - size_;
+    return size;
 }
 //-----------------------------------------------------------------------------------
-static int fs_read(const char *path, char *buf, size_t size, 
-					off_t off, struct fuse_file_info *ffi) 
+static int fs_read(const char *path, char *buf, size_t size, off_t off, struct fuse_file_info *ffi) 
 {
     printf("fs_read path:%s\n", path);
     (void) ffi;
@@ -405,7 +397,7 @@ int dump_dir(int img, int inode_nr, char* fill_buf, struct ext2_super_block *s_b
                 fuse_fill_dir_t fill) {
     int BLOCK_SIZE = BLOCK_INIT << s_block->s_log_block_size;
     //
-    printf("dump_dir \n");
+    // printf("dump_dir \n");
     struct ext2_group_desc g_desc;
     uint offset = BLOCK_SIZE * (s_block->s_first_data_block + 1) 
             + (inode_nr - 1) / s_block->s_inodes_per_group * sizeof(g_desc);
@@ -444,7 +436,7 @@ int dump_dir(int img, int inode_nr, char* fill_buf, struct ext2_super_block *s_b
             }  
         }
     }  
-    printf("end dump dir\n");
+    // printf("end dump dir\n");
     return 0;
 }
 void copy_name(const char* from, char* to, int len) {
@@ -464,7 +456,6 @@ int handle_direct_blocks(int img, uint i_block, uint block_size, fuse_fill_dir_t
         dir_entry = (struct ext2_dir_entry_2*)(buffer + cur_pos);
         char name[dir_entry->name_len + 1];
         copy_name(dir_entry->name, name, dir_entry->name_len);
-
         struct stat stat = {};
         stat.st_ino = dir_entry->inode;        
         if(dir_entry->file_type == EXT2_FT_REG_FILE)
