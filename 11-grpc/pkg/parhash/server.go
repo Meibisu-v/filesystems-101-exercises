@@ -119,7 +119,7 @@ func (s *Server) ParallelHash(ctx context.Context, req *parhashpb.ParHashReq) (r
 		client[i] = hashpb.NewHashSvcClient(conn[i])
 	}
 	var (
-		wg     = workgroup.New(workgroup.Config{Sem: semaphore.NewWeighted(8)})
+		wg     = workgroup.New(workgroup.Config{Sem: s.sem})
 		hashes = make([][]byte, len(req.Data))
 		// lock   sync.Mutex
 	)
