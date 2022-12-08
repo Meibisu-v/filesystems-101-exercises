@@ -51,7 +51,6 @@ type Server struct {
 	wg   sync.WaitGroup
 	sem *semaphore.Weighted
 	currentBackend int
-	lock   sync.Mutex
 }
 
 func New(conf Config) *Server {
@@ -121,26 +120,26 @@ func (s *Server) ParallelHash(ctx context.Context, req *parhashpb.ParHashReq) (r
 	var (
 		wg     = workgroup.New(workgroup.Config{Sem: s.sem})
 		hashes = make([][]byte, len(req.Data))
-		// lock   sync.Mutex
+		lock   sync.Mutex
 	)
 	for i := range req.Data {
 		wg.Go(ctx, func(ctx context.Context) (err error) {
-			s.lock.Lock()
+			lock.Lock()
 			currentBackend := s.currentBackend
 			s.currentBackend += 1
 			if (s.currentBackend >= len(s.conf.BackendAddrs)) {
 				s.currentBackend =0
 			}
-			s.lock.Unlock()
+			// lock.Unlock()
 
 			resp, err := client[currentBackend].Hash(ctx, &hashpb.HashReq{Data: req.Data[i]})
 			if err != nil {
 				return err
 			}
 
-			s.lock.Lock()
+			// lock.Lock()
 			hashes[i] = resp.Hash
-			s.lock.Unlock()
+			lock.Unlock()
 
 			return nil
 		})
