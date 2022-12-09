@@ -131,14 +131,14 @@ func (s *Server) ParallelHash(ctx context.Context, req *parhashpb.ParHashReq) (r
 			if (s.currentBackend >= len(s.conf.BackendAddrs)) {
 				s.currentBackend =0
 			}
-			lock.Unlock()
+			s.lock.Unlock()
 
 			resp, err := client[currentBackend].Hash(ctx, &hashpb.HashReq{Data: req.Data[qr]})
 			if err != nil {
 				return err
 			}
 
-			lock.Lock()
+			s.lock.Lock()
 			hashes[qr] = resp.Hash
 			s.lock.Unlock()
 
