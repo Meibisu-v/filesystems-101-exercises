@@ -98,10 +98,12 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	s.nr_nr_requests = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "parhash", Name: "nr_requests",
 	})
+	s.conf.Prom.MustRegister(s.nr_nr_requests)
 	s.subquery_durations = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "parhash", Name: "subsequery_durations", 
 		Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 24),
 	}, []string{"backend"},)
+	s.conf.Prom.MustRegister(s.subquery_durations)
 	s.wg.Add(2)
 	go func() {
 		defer s.wg.Done()
