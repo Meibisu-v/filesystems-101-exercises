@@ -174,8 +174,7 @@ func (s *Server) ParallelHash(ctx context.Context, req *parhashpb.ParHashReq) (r
 			s.lock.Unlock()
 			s.subquery_durations.With(prometheus.Labels{
 				"backend" : s.conf.BackendAddrs[currentBackend]}).Observe(
-					float64(time_f.Microseconds()) / 1000
-				)
+					float64(time_f.Microseconds()) / 1000)
 			return nil
 		})
 	}
