@@ -95,7 +95,13 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	srv := grpc.NewServer()
 	// hashpb.RegisterHashSvcServer(srv, s)
 	parhashpb.RegisterParallelHashSvcServer(srv, s)
-
+	s.nr_nr_requests = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "parhash", Name: "nr_requests",
+	})
+	s.subquery_durations = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "parhash", Name: "subsequery_durations", 
+		Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 24),
+	}, []string{"backend"},)
 	s.wg.Add(2)
 	go func() {
 		defer s.wg.Done()
