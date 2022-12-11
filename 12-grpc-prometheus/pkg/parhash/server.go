@@ -100,7 +100,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	})
 	s.conf.Prom.MustRegister(s.nr_nr_requests)
 	s.subquery_durations = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "parhash", Name: "subsequery_durations", 
+		Namespace: "parhash", Name: "subquery_durations", 
 		Buckets: prometheus.ExponentialBucketsRange(0.1, 1000, 24),
 	}, []string{"backend"},)
 	s.conf.Prom.MustRegister(s.subquery_durations)
